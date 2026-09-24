@@ -1,4 +1,4 @@
-# Nightly staging tests. Runs on GitHub's machines, so no home laptop is needed (John travels from 27 Sep).
+# Nightly staging tests (21:00 UTC). Runs on GitHub's machines, so no home laptop is needed (John travels from 27 Sep).
 # Staging only: every script aborts if pointed at anything that is not staginggm.com.
 # Secrets (John enters them in GitHub > Settings > Secrets and variables > Actions, never in chat or a file):
 #   GM_TEST_LOGIN_KEY      Joseph's /gm-test-login key, sent as the X-GM-Test-Key header
@@ -8,7 +8,7 @@ name: nightly-staging
 
 on:
   schedule:
-    - cron: '0 21 * * *'   # 21:00 UTC = 00:00 Dubai
+    - cron: '0 21 * * *'   # 21:00 UTC = 00:00 UTC+3, 01:00 Dubai
   workflow_dispatch: {}     # run by hand from the Actions tab
 
 permissions:
