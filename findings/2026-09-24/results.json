@@ -1,0 +1,191 @@
+{
+  "date": "2026-09-24",
+  "base": "https://www.staginggm.com",
+  "writes": true,
+  "tiers": {
+    "starter": {
+      "tier": "starter",
+      "steps": {
+        "login": {
+          "status": 500,
+          "landed": "https://www.staginggm.com/gm-test-login?account=starter"
+        }
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 ()"
+      ],
+      "failedRequests": [
+        {
+          "status": 500,
+          "url": "https://www.staginggm.com/gm-test-login?account=starter"
+        }
+      ]
+    },
+    "plus": {
+      "tier": "plus",
+      "steps": {
+        "login": {
+          "status": 500,
+          "landed": "https://www.staginggm.com/gm-test-login?account=plus"
+        }
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 ()"
+      ],
+      "failedRequests": [
+        {
+          "status": 500,
+          "url": "https://www.staginggm.com/gm-test-login?account=plus"
+        }
+      ]
+    },
+    "advanced": {
+      "tier": "advanced",
+      "steps": {
+        "login": {
+          "status": 500,
+          "landed": "https://www.staginggm.com/gm-test-login?account=advanced"
+        }
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 ()"
+      ],
+      "failedRequests": [
+        {
+          "status": 500,
+          "url": "https://www.staginggm.com/gm-test-login?account=advanced"
+        }
+      ]
+    },
+    "pro": {
+      "tier": "pro",
+      "steps": {
+        "login": {
+          "status": 500,
+          "landed": "https://www.staginggm.com/gm-test-login?account=pro"
+        }
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 ()"
+      ],
+      "failedRequests": [
+        {
+          "status": 500,
+          "url": "https://www.staginggm.com/gm-test-login?account=pro"
+        }
+      ]
+    }
+  },
+  "findings": [
+    {
+      "severity": "blocker",
+      "tier": "starter",
+      "area": "login",
+      "summary": "Test login returned 500; the tier could not be tested."
+    },
+    {
+      "severity": "blocker",
+      "tier": "plus",
+      "area": "login",
+      "summary": "Test login returned 500; the tier could not be tested."
+    },
+    {
+      "severity": "blocker",
+      "tier": "advanced",
+      "area": "login",
+      "summary": "Test login returned 500; the tier could not be tested."
+    },
+    {
+      "severity": "blocker",
+      "tier": "pro",
+      "area": "login",
+      "summary": "Test login returned 500; the tier could not be tested."
+    },
+    {
+      "severity": "high",
+      "tier": "starter",
+      "area": "server",
+      "summary": "1 requests returned 5xx.",
+      "sample": [
+        {
+          "status": 500,
+          "url": "https://www.staginggm.com/gm-test-login?account=starter"
+        }
+      ]
+    },
+    {
+      "severity": "high",
+      "tier": "plus",
+      "area": "server",
+      "summary": "1 requests returned 5xx.",
+      "sample": [
+        {
+          "status": 500,
+          "url": "https://www.staginggm.com/gm-test-login?account=plus"
+        }
+      ]
+    },
+    {
+      "severity": "high",
+      "tier": "advanced",
+      "area": "server",
+      "summary": "1 requests returned 5xx.",
+      "sample": [
+        {
+          "status": 500,
+          "url": "https://www.staginggm.com/gm-test-login?account=advanced"
+        }
+      ]
+    },
+    {
+      "severity": "high",
+      "tier": "pro",
+      "area": "server",
+      "summary": "1 requests returned 5xx.",
+      "sample": [
+        {
+          "status": 500,
+          "url": "https://www.staginggm.com/gm-test-login?account=pro"
+        }
+      ]
+    },
+    {
+      "severity": "medium",
+      "tier": "starter",
+      "area": "console",
+      "summary": "1 distinct console errors on the hub.",
+      "sample": [
+        "Failed to load resource: the server responded with a status of 500 ()"
+      ]
+    },
+    {
+      "severity": "medium",
+      "tier": "plus",
+      "area": "console",
+      "summary": "1 distinct console errors on the hub.",
+      "sample": [
+        "Failed to load resource: the server responded with a status of 500 ()"
+      ]
+    },
+    {
+      "severity": "medium",
+      "tier": "advanced",
+      "area": "console",
+      "summary": "1 distinct console errors on the hub.",
+      "sample": [
+        "Failed to load resource: the server responded with a status of 500 ()"
+      ]
+    },
+    {
+      "severity": "medium",
+      "tier": "pro",
+      "area": "console",
+      "summary": "1 distinct console errors on the hub.",
+      "sample": [
+        "Failed to load resource: the server responded with a status of 500 ()"
+      ]
+    }
+  ],
+  "notCovered": [],
+  "durationSec": 3
+}

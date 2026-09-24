@@ -1,0 +1,13 @@
+# Secrets never go in this repo
+.env
+.env.*
+*.key
+auth-cookies.json
+.claude/
+# Build and runtime clutter
+node_modules/
+__pycache__/
+*.pyc
+# Screenshots from runs hold staging data; they live in the Actions run artifacts, not in git
+findings/**/*.png
+golden-master/captures/**/*.png

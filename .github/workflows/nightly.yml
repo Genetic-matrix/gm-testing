@@ -1,0 +1,81 @@
+# Nightly staging tests. Runs on GitHub's machines, so no home laptop is needed (John travels from 27 Sep).
+# Staging only: every script aborts if pointed at anything that is not staginggm.com.
+# Secrets (John enters them in GitHub > Settings > Secrets and variables > Actions, never in chat or a file):
+#   GM_TEST_LOGIN_KEY      Joseph's /gm-test-login key, sent as the X-GM-Test-Key header
+#   GM_MAINTVERIFY_SECRET  Vladimir's MaintVerify API key
+# The scheduled cloud Claude session reads the committed results and writes John's morning report.
+name: nightly-staging
+
+on:
+  schedule:
+    - cron: '0 21 * * *'   # 21:00 UTC = 00:00 Dubai
+  workflow_dispatch: {}     # run by hand from the Actions tab
+
+permissions:
+  contents: write           # to commit the night's results back for the report session
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check secrets are set
+        env:
+          GM_TEST_LOGIN_KEY: ${{ secrets.GM_TEST_LOGIN_KEY }}
+          GM_MAINTVERIFY_SECRET: ${{ secrets.GM_MAINTVERIFY_SECRET }}
+        run: |
+          missing=0
+          [ -n "$GM_TEST_LOGIN_KEY" ] || { echo "::error::Secret GM_TEST_LOGIN_KEY is not set"; missing=1; }
+          [ -n "$GM_MAINTVERIFY_SECRET" ] || { echo "::error::Secret GM_MAINTVERIFY_SECRET is not set"; missing=1; }
+          exit $missing
+
+      - name: Install Playwright and Chromium
+        working-directory: routine
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Tier tests (login, facets, filters, create, sequences, token death)
+        working-directory: routine
+        continue-on-error: true
+        env:
+          GM_TEST_LOGIN_KEY: ${{ secrets.GM_TEST_LOGIN_KEY }}
+          GM_NIGHTLY_MAX_MIN: '20'
+        run: node nightly.js
+
+      - name: MaintVerify capture and compare
+        working-directory: golden-master
+        continue-on-error: true
+        env:
+          GM_MAINTVERIFY_SECRET: ${{ secrets.GM_MAINTVERIFY_SECRET }}
+        run: node maintverify.js
+
+      - name: Keep the screenshots with the run (not in git)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-${{ github.run_id }}
+          path: |
+            findings/
+            golden-master/captures/
+          retention-days: 30
+
+      - name: Commit the night's results (text only)
+        if: always()
+        run: |
+          git config user.name  "gm-nightly"
+          git config user.email "gm-nightly@users.noreply.github.com"
+          git add findings golden-master/captures
+          git diff --cached --quiet && { echo "nothing new"; exit 0; }
+          git commit -m "Nightly results $(date -u +%F)"
+          git push

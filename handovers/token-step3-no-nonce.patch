@@ -1,0 +1,52 @@
+diff --git a/wp-content/themes/geneticmatrix/gm-hub-token.php b/wp-content/themes/geneticmatrix/gm-hub-token.php
+index af3f8d2d..d7206929 100644
+--- a/wp-content/themes/geneticmatrix/gm-hub-token.php
++++ b/wp-content/themes/geneticmatrix/gm-hub-token.php
+@@ -95,7 +95,21 @@ if ( ! function_exists( 'gm_hub_refresh_token_ajax' ) ) {
+         if ( ! is_user_logged_in() ) {
+             wp_send_json_error( array( 'message' => 'unauthorized' ), 401 );
+         }
+-        check_ajax_referer( 'gm_hub_refresh_token', 'nonce' );
++
++        /* NO PAGE NONCE (2026-09-23, F-005), the same reasoning as gm_hub_logout_url_ajax below.
++           The nonce was baked into the page at render and dies 12 to 24 h later, so a hub left
++           open that long could never renew its token: every refresh was refused and the member
++           saw "not available". The WordPress session cookie is the real authentication here.
++
++           What stops a hostile page abusing it: the auth cookie is not sent on a cross-site POST
++           (SameSite=Lax is the browser default), and even if it were, admin-ajax sends no CORS
++           headers, so a cross-origin script cannot read the token in the response. The worst it
++           could do is make the member mint a fresh token of their own. Belt and braces: a request
++           that states an Origin must be our own host. */
++        $origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? (string) $_SERVER['HTTP_ORIGIN'] : '';
++        if ( $origin !== '' && wp_parse_url( $origin, PHP_URL_HOST ) !== wp_parse_url( home_url(), PHP_URL_HOST ) ) {
++            wp_send_json_error( array( 'message' => 'bad origin' ), 403 );
++        }
+ 
+         // gm_hub_bootstrap_token() reads $_SESSION['client_id'], set elsewhere at login. The page
+         // render path starts the session itself (template-user-hub-tailwind.php); an ajax request
+diff --git a/wp-content/themes/geneticmatrix/hub-assets/hub-token.js b/wp-content/themes/geneticmatrix/hub-assets/hub-token.js
+index 6f2bd8df..3eccb013 100644
+--- a/wp-content/themes/geneticmatrix/hub-assets/hub-token.js
++++ b/wp-content/themes/geneticmatrix/hub-assets/hub-token.js
+@@ -30,16 +30,16 @@
+   function refreshToken() {
+     if (refreshing) { return refreshing; }
+ 
++    // No nonce: the endpoint authenticates from the WordPress session cookie alone, because a nonce
++    // baked into the page dies 12 to 24 h after load (F-005, see gm_hub_refresh_token_ajax).
+     var ajaxUrl = window.GM_AJAX_URL || '';
+-    var nonce = window.GM_REFRESH_NONCE || '';
+-    if (!ajaxUrl || !nonce) {
+-      warn('cannot renew: the page has no refresh URL or nonce.');
++    if (!ajaxUrl) {
++      warn('cannot renew: the page has no refresh URL.');
+       return Promise.resolve(currentToken());
+     }
+ 
+     var body = new URLSearchParams();
+     body.set('action', 'gm_hub_refresh_token');
+-    body.set('nonce', nonce);
+ 
+     var status = 0;
+     refreshing = fetch(ajaxUrl, {
