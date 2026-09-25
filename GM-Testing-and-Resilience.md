@@ -89,6 +89,13 @@ Until then this section is a placeholder and the golden-master row in the table 
 
 **First anchor (23 Sep):** Vladimir's `/MaintVerify` (staging `https://api.staginggm.com/`, fixture psId 339, 6 modes) and his 7 `verify_*.txt` baselines, stored with checksums in `golden-master/vladimir-baselines-2026-09-23/`. Chinese is externally validated, topo and cycles cross-checked; natal was independently checked here: 30 of 30 positions (Chiron included) match Swiss Ephemeris within 1 arcsecond, all lines consistent, Profile and Incarnation Cross match the canonical dump (`natal-independent-check.md`). Open: the gate wheel start the engine uses (one value, applied to sidereal longitudes) must be confirmed against the canonical source. One fixture only: the edge-case corpus above is still to build.
 
+## Release gate: red team (John, 25 Sep, NON-NEGOTIABLE)
+
+- **Nothing launches with an open VALID red-team finding unless John accepts it in writing.** Applies to the new app, every hub change, reports, public pages, published figures and campaigns.
+- Before each launch a separate agent attacks it as hostile experts and users would: ranked by damage, verdict and fix per item. Scope always includes a picture-vs-text check (images, captions, alt text against the copy) and every figure checked against its source.
+- **The test suites are red-teamed too:** what would they NOT catch (silent no-ops, controls that cannot fail, figures never compared to a source, screens never checked picture-vs-text). Every suite carries at least one check that must be NONZERO, because a zero-control passes a run that wrote nothing. `nightly.js` has these guards (25 Sep): facets returned, people present, filter queries actually run, at least one tier reached the hub.
+- Launch checklist = nightly green on staging + red-team pass with no open VALID finding + real Safari-on-Mac pass for hub changes + John's written acceptance of anything left open.
+
 ## Environments & safe access
 
 - **Never write to live. Ever.** Claude works on staging only. Live changes are a human copying reviewed files.

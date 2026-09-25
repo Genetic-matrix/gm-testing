@@ -160,6 +160,8 @@ async function runTier(browser, tier) {
     r.steps.facetsStatus = facets.status;
     const facetList = (facets.json && facets.json.data) || [];
     if (facets.status !== 200) finding('high', tier, 'filters', `/api/facets returned ${facets.status}.`);
+    // NONZERO guard: an empty facet list makes every entitlement check below pass by testing nothing.
+    else if (!facetList.length) finding('high', tier, 'filters', '/api/facets returned no facets: the entitlement checks tested nothing.');
     for (const f of facetList) {
       const shouldLock = tierNow < f.min_tier;
       if (f.locked !== shouldLock) finding('high', tier, 'entitlement', `Facet "${f.key}" locked=${f.locked}, expected ${shouldLock} (min_tier ${f.min_tier}, tier ${tierNow}).`);
@@ -172,6 +174,8 @@ async function runTier(browser, tier) {
     r.steps.peopleTotal = total;
     r.steps.activeSystem = people.json && people.json.active;
     if (people.status !== 200) finding('high', tier, 'people', `/api/people returned ${people.status}.`);
+    // NONZERO guard: with no people, the hole counts and filter totals below silently check nothing.
+    else if (!list.length) finding('high', tier, 'coverage', 'The QA account has no people: derived-data and filter checks tested nothing. Seed the account.');
     if (total > 500) results.notCovered.push(`${tier}: ${total} people, only the first 500 were checked.`);
 
     // Locked facet data must not ride along in the payload.
@@ -197,11 +201,15 @@ async function runTier(browser, tier) {
       for (const p of list) if (p[src]) b2[p[src]] = (b2[p[src]] || 0) + 1;
       for (const [val, n] of Object.entries(key === 'type' ? b2 : buckets).slice(0, 12)) {
         if (timeLeft() < 60000) break;
+        r.steps.filterQueries = (r.steps.filterQueries || 0) + 1;
         const q = await api(ctx, 'GET', `${A}/api/people?per_page=500&${key}=${encodeURIComponent(val)}`, env.token);
         if (q.status !== 200) { finding('high', tier, 'filters', `Filter ${key}=${val} returned ${q.status}.`); continue; }
         if (q.json.total !== n) finding('high', tier, 'filters', `Filter ${key}=${val} returned ${q.json.total}, the full list has ${n}.`);
       }
     }
+
+    // NONZERO guard: people exist but not one filter query ran, so the filter check proved nothing.
+    if (list.length && !r.steps.filterQueries) finding('high', tier, 'coverage', 'People exist but no Type/Authority filter query ran: the filter check proved nothing.');
 
     // Filter rail renders in the UI.
     const railItems = await page.locator('#chartRail > *').count().catch(() => 0);
@@ -453,6 +461,10 @@ async function runSequences(ctx, r, tier, tierNow, A, token, page, shot) {
 })();
 
 function write() {
+  // NONZERO guard for the whole run: if no tier got a hub token, nothing was tested, whatever else passed.
+  const reached = Object.values(results.tiers).filter(t => t.steps && t.steps.apiBase).length;
+  results.tiersReachedHub = reached;
+  if (!reached && !results.findings.some(f => f.severity === 'blocker')) finding('blocker', '-', 'coverage', 'No tier reached the hub: the run tested nothing.');
   const order = { blocker: 0, critical: 1, high: 2, medium: 3, low: 4 };
   results.findings.sort((a, b) => order[a.severity] - order[b.severity]);
   results.durationSec = Math.round((Date.now() - started) / 1000);
