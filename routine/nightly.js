@@ -76,7 +76,19 @@ const KNOWN_CONSOLE = [/CookieYes|website URL has changed/i];
 // Red-team fix 7: expected minimum tier per facet, from gmlaravelweb config/facets.php as John set it
 // (16-17 Sep: Type, Profile, Authority for all; everything else Pro). Checked against the API, not against itself.
 const EXPECTED_MIN_TIER = { type_full: 0, profile: 0, authority: 0, cross: 3, definition: 3, determination: 3, environment: 3, motivation: 3, trajectory: 3, view: 3, variable: 3, channels: 3 };
-let pendingRestore = null;   // red-team fix 10: restore the Pro account's calc method even if the time cap fires
+let pendingRestore = null;
+// Red-team fix 6 (25 Sep): expected Profile and Incarnation Cross for the QA person, computed independently
+// (Swiss Ephemeris + canonical dumps, golden-master/qa_expected.py). Type is not independently verified.
+let QA_EXPECTED = null;
+try { QA_EXPECTED = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'golden-master', 'qa-expected.json'), 'utf8')); } catch {}
+function checkExpected(row, which, tier, id) {
+  if (!QA_EXPECTED || !QA_EXPECTED[which]) { results.notCovered.push(`${tier}: expected Profile/Cross check skipped (qa-expected.json missing).`); return; }
+  const exp = QA_EXPECTED[which];
+  const digits = v => String(v == null ? '' : v).replace(/\D/g, '');
+  if (digits(row.profile) !== digits(exp.profile)) finding('critical', tier, 'chart-values', `Person ${id} (${which}): Profile is "${row.profile}", expected ${exp.profile} (independent Swiss Ephemeris check).`);
+  const cross = String(row.cross || '').toLowerCase();
+  if (!cross || !exp.cross_name || !cross.includes(exp.cross_name.toLowerCase())) finding('critical', tier, 'chart-values', `Person ${id} (${which}): Incarnation Cross is "${row.cross || ''}", expected "${exp.cross_name}" (id ${exp.cross_id}).`);
+}   // red-team fix 10: restore the Pro account's calc method even if the time cap fires
 const WRITES = process.env.GM_NIGHTLY_WRITES !== '0';
 const TIERS = (process.env.GM_NIGHTLY_TIERS || 'starter,plus,advanced,pro').split(',').map(s => s.trim()).filter(Boolean);
 const TIER_LEVEL = { starter: 0, plus: 1, advanced: 2, pro: 3 };
@@ -292,6 +304,10 @@ async function runTier(browser, tier) {
         else {
           if (!row.type) finding('high', tier, 'derived-data', `New person ${id} has no Type right after save (derived data not written with the person).`);
           if (!row.profile) finding('high', tier, 'derived-data', `New person ${id} has no Profile right after save.`);
+          // Cross is a Pro facet, withheld from lower tiers, so they check Profile only.
+          else if (row.cross) checkExpected(row, 'created', tier, id);
+          else if (tierNow >= 3) finding('high', tier, 'derived-data', `New person ${id} has no Incarnation Cross right after save.`);
+          else checkExpected({ profile: row.profile, cross: QA_EXPECTED && QA_EXPECTED.created ? QA_EXPECTED.created.cross_name : '' }, 'created', tier, id);
         }
         const charts = await api(ctx, 'GET', `${A}/api/people/${id}/charts`, env.token);
         if (charts.status !== 200) finding('high', tier, 'create', `/api/people/${id}/charts returned ${charts.status}.`);
@@ -308,6 +324,20 @@ async function runTier(browser, tier) {
       await runSequences(ctx, r, tier, tierNow, r.steps.apiA, env.token, page, shot);
     } else if (WRITES) {
       results.notCovered.push(`${tier}: edit and calc-method sequences skipped (no person created tonight${timeLeft() <= 120000 ? ', or out of time' : ''}).`);
+    }
+    // Red-team fix 11 (John, 25 Sep): delete ONLY the person this run created tonight, so the QA accounts
+    // do not fill up (Starter would hit its 5-person cap and stop testing). Identified by the id returned
+    // at create AND the QA name; nothing else is ever deleted.
+    if (r.steps.createdId && r.steps.apiA) {
+      const qaName = `QA Nightly ${today} ${tier}`;
+      const chk = await api(ctx, 'GET', `${r.steps.apiA}/api/people/${r.steps.createdId}`, env.token);
+      const nm = chk.json && chk.json.data ? `${chk.json.data.fname || ''} ${chk.json.data.lname || ''}`.trim() : '';
+      if (nm !== qaName) finding('high', tier, 'runner', `Not deleting person ${r.steps.createdId}: its name "${nm}" is not tonight's QA name. Left in place.`);
+      else {
+        const del = await api(ctx, 'DELETE', `${r.steps.apiA}/api/people/${r.steps.createdId}`, env.token);
+        r.steps.deletedOwn = del.status;
+        if (del.status < 200 || del.status >= 300) finding('medium', tier, 'runner', `Could not delete tonight's QA person ${r.steps.createdId} (${del.status}); the account will fill up.`);
+      }
     }
   } catch (e) {
     finding('high', tier, 'runner', `Tier run crashed: ${e.message.split('\n')[0]}`);
@@ -403,8 +433,9 @@ async function runSequences(ctx, r, tier, tierNow, A, token, page, shot) {
   if (rec.status !== 200 || !d || !d.dob) {
     finding('high', tier, 'edit', `GET /api/people/${id} returned ${rec.status}; the edit form could not load the person.`);
   } else {
-    const [date, time = '12:00:00'] = String(d.dob).split(' ');
-    const newTime = `${String((Number(time.slice(0, 2)) + 1) % 24).padStart(2, '0')}:${time.slice(3, 5)}`;
+    // Red-team fix 6: move the birth DATE by 10 days (25 Jun 1985, same 14:30 local), which changes Profile
+    // and Cross, so a save that does not recompute the derived data cannot pass.
+    const date = '1985-06-25', newTime = '14:30';
     const utc = await api(ctx, 'GET', `${A}/api/geo/utc?lat=${d.latitude}&lng=${d.longitude}&date=${date}&time=${newTime}`, token);
     const dob = `${date} ${newTime}:00`;
     const put = await api(ctx, 'PUT', `${A}/api/people/${id}`, token, { dob, dobUTC: (utc.json && utc.json.dobUTC) || dob });
@@ -415,6 +446,8 @@ async function runSequences(ctx, r, tier, tierNow, A, token, page, shot) {
       if (!after.row) finding('critical', tier, 'edit', `Person ${id} disappeared from /api/people after an edit.`);
       else {
         if (!after.row.type || !after.row.profile) finding('high', tier, 'derived-data', `Person ${id} lost Type or Profile after an edit (derived data not rewritten with the save).`);
+        else if (after.row.cross) checkExpected(after.row, 'after_edit', tier, id);
+        else { const exp = QA_EXPECTED && QA_EXPECTED.after_edit; if (exp && String(after.row.profile).replace(/\D/g, '') !== exp.profile.replace(/\D/g, '')) finding('critical', tier, 'chart-values', `Person ${id} after edit: Profile is "${after.row.profile}", expected ${exp.profile}: the edit did not recompute the chart.`); }
         seq.editChangedType = before.row && before.row.type !== after.row.type;
       }
       const again = await api(ctx, 'GET', `${A}/api/people/${id}`, token);
