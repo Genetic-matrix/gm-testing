@@ -11,7 +11,7 @@ You run in the cloud with a checkout of this repo (`Genetic-matrix/gm-testing`).
 
 ## Steps
 1. `git pull`. Use today's UTC date `D` (`date -u +%F`); if `findings/D/` does not exist, use yesterday's.
-2. Read `findings/D/summary.md` and `results.json` (tier tests, Chromium), `findings/D/webkit/summary.md` (the same checks in WebKit, read-only) and `golden-master/captures/D/compare.md` (MaintVerify). If either is missing, the nightly run did not happen or failed: say so in the first line of the report.
+2. Read `findings/D/summary.md` and `results.json` (tier tests, Chromium), `findings/D/webkit/summary.md` (the same checks in WebKit, read-only), `findings/D/safari/summary.md` (REAL Safari on a Mac: PASS / FAIL / NOT COVERED per path) and `golden-master/captures/D/compare.md` (MaintVerify). If either is missing, the nightly run did not happen or failed: say so in the first line of the report.
 3. MaintVerify: these differences are known and already reported, do not raise them again: natal and topo design time (F-009), calendar `zodiac_acro` now filled, calendar_moon fixture settings edited. Anything else that differs is new.
 4. Compare with the last report (`findings/*/REPORT.md`, most recent before D) to separate new findings from repeats.
 5. Write `findings/D/REPORT.md`:
@@ -19,6 +19,7 @@ You run in the cloud with a checkout of this repo (`Genetic-matrix/gm-testing`).
    - Ranked findings, one per line, each ready to hand to a fix session: severity, tier, what happens, where.
    - Fixes: for each ledger row marked `fix committed`, say whether tonight's results show it still failing or no longer failing. You cannot retest by hand; say "no signal" when the results do not cover it.
    - Still open, and not covered tonight.
+   - A "Safari" section from the real-Safari run: every FAIL, and list the NOT COVERED paths as still needing the manual Mac check. Never count NOT COVERED as a pass.
    - A "WebKit" section: anything that fails in WebKit but passes in Chromium is a likely Safari bug; label it that way. WebKit is an early warning only; it never counts as the Safari-on-Mac check, which stays manual before go-live.
    - Improvements (speed, UX) in a short separate list after the bugs.
 6. Add each new finding to `findings/LEDGER.md` as `open` with the next free ID. For a repeat, update its "Last seen" date only.

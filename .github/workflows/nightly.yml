@@ -93,4 +93,59 @@ jobs:
           git add findings golden-master/captures
           git diff --cached --quiet && { echo "nothing new"; exit 0; }
           git commit -m "Nightly results $(date -u +%F)"
+          git pull --rebase -q origin main
+          git push
+
+  # Real Safari on a GitHub Mac (approved by John 25 Sep, about $20-25/month of Mac minutes).
+  # Not a substitute for the manual Safari-on-Mac check before go-live: NOT COVERED paths stay manual.
+  safari:
+    needs: nightly
+    if: always()
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check the login key is set
+        env:
+          GM_TEST_LOGIN_KEY: ${{ secrets.GM_TEST_LOGIN_KEY }}
+        run: '[ -n "$GM_TEST_LOGIN_KEY" ] || { echo "::error::Secret GM_TEST_LOGIN_KEY is not set"; exit 1; }'
+
+      - name: Install and enable safaridriver
+        working-directory: routine
+        run: |
+          npm ci
+          sudo safaridriver --enable
+
+      - name: Real Safari paths
+        working-directory: routine
+        continue-on-error: true
+        env:
+          GM_TEST_LOGIN_KEY: ${{ secrets.GM_TEST_LOGIN_KEY }}
+          GM_SAFARI_TIER: pro
+        run: node safari.js
+
+      - name: Keep the Safari screenshots with the run (not in git)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: safari-${{ github.run_id }}
+          path: findings/
+          retention-days: 30
+
+      - name: Commit the Safari results (text only)
+        if: always()
+        run: |
+          git config user.name  "gm-nightly"
+          git config user.email "gm-nightly@users.noreply.github.com"
+          git add findings
+          git diff --cached --quiet && { echo "nothing new"; exit 0; }
+          git commit -m "Safari results $(date -u +%F)"
+          git pull --rebase -q origin main
           git push
