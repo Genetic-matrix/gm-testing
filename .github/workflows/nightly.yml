@@ -3,6 +3,7 @@
 # Secrets (John enters them in GitHub > Settings > Secrets and variables > Actions, never in chat or a file):
 #   GM_TEST_LOGIN_KEY      Joseph's /gm-test-login key, sent as the X-GM-Test-Key header
 #   GM_MAINTVERIFY_SECRET  Vladimir's MaintVerify API key
+#   GM_CF_ACCESS_CLIENT_ID / GM_CF_ACCESS_CLIENT_SECRET  optional, Cloudflare Access service token once staging is behind Access
 # The scheduled cloud Claude session reads the committed results and writes John's morning report.
 name: nightly-staging
 
@@ -50,6 +51,8 @@ jobs:
         continue-on-error: true
         env:
           GM_TEST_LOGIN_KEY: ${{ secrets.GM_TEST_LOGIN_KEY }}
+          GM_CF_ACCESS_CLIENT_ID: ${{ secrets.GM_CF_ACCESS_CLIENT_ID }}
+          GM_CF_ACCESS_CLIENT_SECRET: ${{ secrets.GM_CF_ACCESS_CLIENT_SECRET }}
           GM_NIGHTLY_MAX_MIN: '20'
         run: node nightly.js
 

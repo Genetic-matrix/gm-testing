@@ -6,10 +6,12 @@
 const { execSync } = require('child_process');
 const k = (process.env.GM_TEST_LOGIN_KEY || execSync('reg query HKCU\\Environment /v GM_TEST_LOGIN_KEY', { encoding: 'utf8' })
   .match(/GM_TEST_LOGIN_KEY\s+REG_\w+\s+(.+)/)[1]).trim();
+const cf = (process.env.GM_CF_ACCESS_CLIENT_ID && process.env.GM_CF_ACCESS_CLIENT_SECRET)
+  ? { 'CF-Access-Client-Id': process.env.GM_CF_ACCESS_CLIENT_ID.trim(), 'CF-Access-Client-Secret': process.env.GM_CF_ACCESS_CLIENT_SECRET.trim() } : {};
 const cases = [
-  ['real key', { 'X-GM-Test-Key': k }, s => s !== 401],
-  ['fake key', { 'X-GM-Test-Key': 'not-the-key-' + Date.now() }, s => s === 401],
-  ['no key', {}, s => s === 401],
+  ['real key', { ...cf, 'X-GM-Test-Key': k }, s => s !== 401],
+  ['fake key', { ...cf, 'X-GM-Test-Key': 'not-the-key-' + Date.now() }, s => s === 401],
+  ['no key', { ...cf }, s => s === 401],
 ];
 (async () => {
   let ok = true;

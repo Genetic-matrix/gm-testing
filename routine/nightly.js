@@ -42,6 +42,13 @@ const LOGIN_KEY = (process.env.GM_TEST_LOGIN_KEY || (() => {
     return m ? m[1] : '';
   } catch { return ''; }
 })()).trim();
+// Cloudflare Access service token (optional): once staging moves from basic auth to Cloudflare Access,
+// these two headers get the run through Access. Secrets GM_CF_ACCESS_CLIENT_ID / GM_CF_ACCESS_CLIENT_SECRET.
+const CF_ID = (process.env.GM_CF_ACCESS_CLIENT_ID || '').trim();
+const CF_SECRET = (process.env.GM_CF_ACCESS_CLIENT_SECRET || '').trim();
+const AUTH_HEADERS = Object.assign({},
+  LOGIN_KEY ? { 'X-GM-Test-Key': LOGIN_KEY } : {},
+  CF_ID && CF_SECRET ? { 'CF-Access-Client-Id': CF_ID, 'CF-Access-Client-Secret': CF_SECRET } : {});
 const MAX_MS = (Number(process.env.GM_NIGHTLY_MAX_MIN) || 20) * 60 * 1000;
 const WRITES = process.env.GM_NIGHTLY_WRITES !== '0';
 const TIERS = (process.env.GM_NIGHTLY_TIERS || 'starter,plus,advanced,pro').split(',').map(s => s.trim()).filter(Boolean);
@@ -96,7 +103,7 @@ async function runTier(browser, tier) {
   const expected = TIER_LEVEL[tier];
   const ctx = await browser.newContext({
     viewport: { width: 1440, height: 900 }, // new hub is desktop only
-    extraHTTPHeaders: LOGIN_KEY ? { 'X-GM-Test-Key': LOGIN_KEY } : {},
+    extraHTTPHeaders: AUTH_HEADERS,
   });
   const page = await ctx.newPage();
   const consoleErrors = [];
@@ -288,7 +295,7 @@ async function runTokenTests(browser, tier, shot0) {
   const out = {};
   for (const scenario of ['dead-token', 'stale-nonce']) {
     if (timeLeft() < 90000) { results.notCovered.push(`${tier}: token scenario ${scenario} not run, out of time.`); continue; }
-    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, extraHTTPHeaders: LOGIN_KEY ? { 'X-GM-Test-Key': LOGIN_KEY } : {} });
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, extraHTTPHeaders: AUTH_HEADERS });
     const page = await ctx.newPage();
     const calls = [];
     page.on('response', resp => { const u = resp.url(); if (/\/api\//.test(u) && !/wp-admin/.test(u)) calls.push({ url: u.split('?')[0], status: resp.status() }); });
