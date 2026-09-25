@@ -22,7 +22,7 @@ concurrency:
 jobs:
   nightly:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -44,7 +44,7 @@ jobs:
         working-directory: routine
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
 
       - name: Tier tests (login, facets, filters, create, sequences, token death)
         working-directory: routine
@@ -54,6 +54,18 @@ jobs:
           GM_CF_ACCESS_CLIENT_ID: ${{ secrets.GM_CF_ACCESS_CLIENT_ID }}
           GM_CF_ACCESS_CLIENT_SECRET: ${{ secrets.GM_CF_ACCESS_CLIENT_SECRET }}
           GM_NIGHTLY_MAX_MIN: '20'
+        run: node nightly.js
+
+      - name: WebKit pass (Safari engine early warning, read-only; NOT a Safari-on-Mac pass)
+        working-directory: routine
+        continue-on-error: true
+        env:
+          GM_BROWSER: webkit
+          GM_NIGHTLY_WRITES: '0'
+          GM_TEST_LOGIN_KEY: ${{ secrets.GM_TEST_LOGIN_KEY }}
+          GM_CF_ACCESS_CLIENT_ID: ${{ secrets.GM_CF_ACCESS_CLIENT_ID }}
+          GM_CF_ACCESS_CLIENT_SECRET: ${{ secrets.GM_CF_ACCESS_CLIENT_SECRET }}
+          GM_NIGHTLY_MAX_MIN: '12'
         run: node nightly.js
 
       - name: MaintVerify capture and compare

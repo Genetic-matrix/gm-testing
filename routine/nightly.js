@@ -28,7 +28,10 @@
 //   GM_NIGHTLY_TIERS     default starter,plus,advanced,pro
 //   GM_NIGHTLY_WRITES    default 1; 0 = read-only night (no person created)
 
-const { chromium } = require('playwright');
+const { chromium, webkit } = require('playwright');
+// GM_BROWSER=webkit runs the same checks in WebKit (Safari's engine) as an early warning. It is NOT a
+// Safari-on-Mac pass: that stays a manual check before any hub change goes live (John, 25 Sep).
+const BROWSER = (process.env.GM_BROWSER || 'chromium').toLowerCase();
 const fs = require('fs');
 const path = require('path');
 
@@ -61,7 +64,7 @@ const QA_BIRTH = { country: 'United Kingdom', place: 'London', date: '1985-06-15
 
 const started = Date.now();
 const today = new Date().toISOString().slice(0, 10);
-const OUT = path.join(__dirname, '..', 'findings', today);
+const OUT = path.join(__dirname, '..', 'findings', today, BROWSER === 'webkit' ? 'webkit' : '');
 fs.mkdirSync(OUT, { recursive: true });
 
 // Staging guard. Anything that is not a staginggm.com host is treated as live.
@@ -73,9 +76,9 @@ if (!isStagingHost(BASE)) {
   process.exit(2);
 }
 
-const results = { date: today, base: BASE, writes: WRITES, tiers: {}, findings: [], notCovered: [] };
+const results = { date: today, base: BASE, browser: BROWSER, writes: WRITES, tiers: {}, findings: [], notCovered: [] };
 function finding(severity, tier, area, summary, detail = {}) {
-  results.findings.push({ severity, tier, area, summary, ...detail });
+  results.findings.push({ severity, tier, area: BROWSER === 'webkit' ? `webkit/${area}` : area, summary, ...detail });
 }
 function timeLeft() { return MAX_MS - (Date.now() - started); }
 
@@ -429,7 +432,9 @@ async function runSequences(ctx, r, tier, tierNow, A, token, page, shot) {
 
 (async () => {
   // Edge on John's Windows laptop, Playwright's own Chromium on GitHub's Linux runners (no Edge there).
-  const browser = await chromium.launch(process.platform === 'win32' ? { channel: 'msedge', headless: true } : { headless: true });
+  const browser = BROWSER === 'webkit'
+    ? await webkit.launch({ headless: true })
+    : await chromium.launch(process.platform === 'win32' ? { channel: 'msedge', headless: true } : { headless: true });
   const guard = setTimeout(() => { finding('medium', '-', 'runner', 'Hit the script time cap; results are partial.'); write(); process.exit(3); }, MAX_MS);
   try {
     for (const tier of TIERS) {
@@ -452,7 +457,7 @@ function write() {
   results.findings.sort((a, b) => order[a.severity] - order[b.severity]);
   results.durationSec = Math.round((Date.now() - started) / 1000);
   fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 2));
-  const lines = [`# Nightly raw results ${today}`, '', `Base ${BASE}, writes ${WRITES ? 'on' : 'off'}, ${results.durationSec}s.`, ''];
+  const lines = [`# Nightly raw results ${today}${BROWSER === 'webkit' ? ' (WebKit early warning, not a Safari-on-Mac pass)' : ''}`, '', `Base ${BASE}, browser ${BROWSER}, writes ${WRITES ? 'on' : 'off'}, ${results.durationSec}s.`, ''];
   for (const t of Object.values(results.tiers)) {
     lines.push(`- **${t.tier}**: tier claim ${t.steps.tierClaim ?? '?'}, people ${t.steps.peopleTotal ?? '?'}, create ${t.steps.create ? (t.steps.create.postStatus ?? 'no POST') : 'n/a'}`);
   }
