@@ -1,0 +1,49 @@
+{
+  "date": "2026-09-25",
+  "startedAt": "2026-09-25T14:12:37.879Z",
+  "runId": "local",
+  "base": "https://www.staginggm.com",
+  "browser": "chromium",
+  "writes": false,
+  "tiers": {
+    "plus": {
+      "tier": "plus",
+      "steps": {},
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 ()"
+      ],
+      "failedRequests": [
+        {
+          "status": 401,
+          "url": "https://www.staginggm.com/gm-test-login?account=plus"
+        }
+      ]
+    }
+  },
+  "findings": [
+    {
+      "severity": "blocker",
+      "tier": "-",
+      "area": "coverage",
+      "summary": "No tier reached the hub: the run tested nothing."
+    },
+    {
+      "severity": "high",
+      "tier": "plus",
+      "area": "runner",
+      "summary": "Tier run crashed: page.goto: net::ERR_INVALID_AUTH_CREDENTIALS at https://www.staginggm.com/gm-test-login?account=plus"
+    },
+    {
+      "severity": "high",
+      "tier": "plus",
+      "area": "console",
+      "summary": "1 NEW console error(s) on the hub (not the known CookieYes noise).",
+      "sample": [
+        "Failed to load resource: the server responded with a status of 401 ()"
+      ]
+    }
+  ],
+  "notCovered": [],
+  "tiersReachedHub": 0,
+  "durationSec": 7
+}

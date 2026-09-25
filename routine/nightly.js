@@ -53,6 +53,30 @@ const AUTH_HEADERS = Object.assign({},
   LOGIN_KEY ? { 'X-GM-Test-Key': LOGIN_KEY } : {},
   CF_ID && CF_SECRET ? { 'CF-Access-Client-Id': CF_ID, 'CF-Access-Client-Secret': CF_SECRET } : {});
 const MAX_MS = (Number(process.env.GM_NIGHTLY_MAX_MIN) || 20) * 60 * 1000;
+
+// Red-team fix 3 (25 Sep): the key and Access token go ONLY to staginggm.com hosts, never to CookieYes,
+// Google, CDNs or anything else the hub page loads.
+async function scopeAuth(ctx) {
+  if (!Object.keys(AUTH_HEADERS).length) return;
+  await ctx.route('**/*', route => {
+    let host = '';
+    try { host = new URL(route.request().url()).hostname; } catch {}
+    if (/(^|\.)staginggm\.com$/i.test(host)) route.continue({ headers: { ...route.request().headers(), ...AUTH_HEADERS } });
+    else route.continue();
+  });
+}
+// Red-team fix: never let a token or the key reach results or git.
+function redact(t) {
+  let out = String(t).replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g, 'JWT***').replace(/([?&](token|key|signature)=)[^&\s]+/gi, '$1***');
+  if (LOGIN_KEY) out = out.split(LOGIN_KEY).join('***');
+  return out;
+}
+// Red-team fix 8: known, already-logged console noise (ledger F-001). Anything else is raised as high.
+const KNOWN_CONSOLE = [/CookieYes|website URL has changed/i];
+// Red-team fix 7: expected minimum tier per facet, from gmlaravelweb config/facets.php as John set it
+// (16-17 Sep: Type, Profile, Authority for all; everything else Pro). Checked against the API, not against itself.
+const EXPECTED_MIN_TIER = { type_full: 0, profile: 0, authority: 0, cross: 3, definition: 3, determination: 3, environment: 3, motivation: 3, trajectory: 3, view: 3, variable: 3, channels: 3 };
+let pendingRestore = null;   // red-team fix 10: restore the Pro account's calc method even if the time cap fires
 const WRITES = process.env.GM_NIGHTLY_WRITES !== '0';
 const TIERS = (process.env.GM_NIGHTLY_TIERS || 'starter,plus,advanced,pro').split(',').map(s => s.trim()).filter(Boolean);
 const TIER_LEVEL = { starter: 0, plus: 1, advanced: 2, pro: 3 };
@@ -76,7 +100,7 @@ if (!isStagingHost(BASE)) {
   process.exit(2);
 }
 
-const results = { date: today, base: BASE, browser: BROWSER, writes: WRITES, tiers: {}, findings: [], notCovered: [] };
+const results = { date: today, startedAt: new Date(started).toISOString(), runId: process.env.GITHUB_RUN_ID || 'local', base: BASE, browser: BROWSER, writes: WRITES, tiers: {}, findings: [], notCovered: [] };
 function finding(severity, tier, area, summary, detail = {}) {
   results.findings.push({ severity, tier, area: BROWSER === 'webkit' ? `webkit/${area}` : area, summary, ...detail });
 }
@@ -104,15 +128,13 @@ async function runTier(browser, tier) {
   const r = { tier, steps: {} };
   results.tiers[tier] = r;
   const expected = TIER_LEVEL[tier];
-  const ctx = await browser.newContext({
-    viewport: { width: 1440, height: 900 }, // new hub is desktop only
-    extraHTTPHeaders: AUTH_HEADERS,
-  });
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } }); // new hub is desktop only
+  await scopeAuth(ctx);
   const page = await ctx.newPage();
   const consoleErrors = [];
   const failedRequests = [];
-  page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 300)); });
-  page.on('pageerror', e => consoleErrors.push(('pageerror: ' + e.message).slice(0, 300)));
+  page.on('console', m => { if (m.type() === 'error') consoleErrors.push(redact(m.text()).slice(0, 300)); });
+  page.on('pageerror', e => consoleErrors.push(redact('pageerror: ' + e.message).slice(0, 300)));
   page.on('response', resp => {
     const s = resp.status();
     if (s >= 400) failedRequests.push({ status: s, url: resp.url().replace(/([?&](token|key|signature)=)[^&]+/gi, '$1***').slice(0, 200) });
@@ -147,7 +169,7 @@ async function runTier(browser, tier) {
     // 3. Staging + tier checks
     const apiStaging = isStagingHost(env.apiBase);
     r.steps.apiBase = env.apiBase;
-    if (!apiStaging) finding('critical', tier, 'environment', `Staging hub API base is not a staginggm.com host: ${env.apiBase}. All writes skipped.`);
+    if (!apiStaging) { finding('critical', tier, 'environment', `Staging hub API base is not a staginggm.com host: ${env.apiBase}. Stopped: no API call is made to a non-staging host.`); return; }
     const claims = decodeJwt(env.token) || {};
     r.steps.tierClaim = claims.tier;
     if (Number(claims.tier) !== expected) finding('high', tier, 'entitlement', `JWT tier is ${claims.tier}, expected ${expected} for the ${tier} account.`);
@@ -165,6 +187,9 @@ async function runTier(browser, tier) {
     for (const f of facetList) {
       const shouldLock = tierNow < f.min_tier;
       if (f.locked !== shouldLock) finding('high', tier, 'entitlement', `Facet "${f.key}" locked=${f.locked}, expected ${shouldLock} (min_tier ${f.min_tier}, tier ${tierNow}).`);
+      if (!(f.key in EXPECTED_MIN_TIER)) finding('medium', tier, 'entitlement', `Facet "${f.key}" is not in the expected tier map: new facet, confirm its tier with John.`);
+      else if (f.min_tier !== EXPECTED_MIN_TIER[f.key]) finding('high', tier, 'entitlement', `Facet "${f.key}" has min_tier ${f.min_tier}, expected ${EXPECTED_MIN_TIER[f.key]} (config/facets.php as John set it).`);
+      else if (f.locked !== (tierNow < EXPECTED_MIN_TIER[f.key])) finding('high', tier, 'entitlement', `Facet "${f.key}" locked=${f.locked} for tier ${tierNow}; expected ${tierNow < EXPECTED_MIN_TIER[f.key]}.`);
     }
 
     const people = await api(ctx, 'GET', `${A}/api/people?per_page=500`, env.token);
@@ -202,6 +227,7 @@ async function runTier(browser, tier) {
       for (const [val, n] of Object.entries(key === 'type' ? b2 : buckets).slice(0, 12)) {
         if (timeLeft() < 60000) break;
         r.steps.filterQueries = (r.steps.filterQueries || 0) + 1;
+        r.steps.filterQueriesByKey = r.steps.filterQueriesByKey || {}; r.steps.filterQueriesByKey[key] = (r.steps.filterQueriesByKey[key] || 0) + 1;
         const q = await api(ctx, 'GET', `${A}/api/people?per_page=500&${key}=${encodeURIComponent(val)}`, env.token);
         if (q.status !== 200) { finding('high', tier, 'filters', `Filter ${key}=${val} returned ${q.status}.`); continue; }
         if (q.json.total !== n) finding('high', tier, 'filters', `Filter ${key}=${val} returned ${q.json.total}, the full list has ${n}.`);
@@ -209,7 +235,7 @@ async function runTier(browser, tier) {
     }
 
     // NONZERO guard: people exist but not one filter query ran, so the filter check proved nothing.
-    if (list.length && !r.steps.filterQueries) finding('high', tier, 'coverage', 'People exist but no Type/Authority filter query ran: the filter check proved nothing.');
+    for (const key of ['type', 'authority']) if (list.length && !((r.steps.filterQueriesByKey || {})[key])) finding('high', tier, 'coverage', `People exist but no ${key} filter query ran (field missing from the payload?): that filter was not tested.`);
 
     // Filter rail renders in the UI.
     const railItems = await page.locator('#chartRail > *').count().catch(() => 0);
@@ -274,6 +300,7 @@ async function runTier(browser, tier) {
         if (!csVisible) finding('medium', tier, 'create', 'After create the hub did not open the new chart.');
         await page.waitForTimeout(4000);
         await shot('chart-after-create');
+        await chartCheck(page, tier, 'after create');
       }
     }
     // 7. Sequences on tonight's QA person only: edit, then calc method, then filter.
@@ -288,7 +315,9 @@ async function runTier(browser, tier) {
   } finally {
     r.consoleErrors = [...new Set(consoleErrors)].slice(0, 30);
     r.failedRequests = failedRequests.slice(0, 30);
-    if (r.consoleErrors.length) finding('medium', tier, 'console', `${r.consoleErrors.length} distinct console errors on the hub.`, { sample: r.consoleErrors.slice(0, 5) });
+    const unknownConsole = r.consoleErrors.filter(m => !KNOWN_CONSOLE.some(re => re.test(m)));
+    if (unknownConsole.length) finding('high', tier, 'console', `${unknownConsole.length} NEW console error(s) on the hub (not the known CookieYes noise).`, { sample: unknownConsole.slice(0, 5) });
+    else if (r.consoleErrors.length) r.knownConsoleOnly = r.consoleErrors.length;
     const serverErrors = failedRequests.filter(f => f.status >= 500);
     if (serverErrors.length) finding('high', tier, 'server', `${serverErrors.length} requests returned 5xx.`, { sample: serverErrors.slice(0, 5) });
     await ctx.close();
@@ -306,9 +335,12 @@ async function runTokenTests(browser, tier, shot0) {
   const out = {};
   for (const scenario of ['dead-token', 'stale-nonce']) {
     if (timeLeft() < 90000) { results.notCovered.push(`${tier}: token scenario ${scenario} not run, out of time.`); continue; }
-    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, extraHTTPHeaders: AUTH_HEADERS });
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await scopeAuth(ctx);
     const page = await ctx.newPage();
     const calls = [];
+    let renewals = 0;
+    page.on('request', rq => { const pd = rq.postData() || ''; if (/admin-ajax\.php/.test(rq.url()) && /gm_hub_refresh_token/.test(pd)) renewals++; });
     page.on('response', resp => { const u = resp.url(); if (/\/api\//.test(u) && !/wp-admin/.test(u)) calls.push({ url: u.split('?')[0], status: resp.status() }); });
     try {
       await page.goto(`${BASE}/gm-test-login?account=${encodeURIComponent(tier)}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -325,9 +357,11 @@ async function runTokenTests(browser, tier, shot0) {
       await page.waitForTimeout(3000);
       const firstId = await page.evaluate(() => (window.PEOPLE && window.PEOPLE[0] && window.PEOPLE[0].id) || null);
       if (firstId) { await page.evaluate(i => window.gmOpenChart && window.gmOpenChart(i), firstId); await page.waitForTimeout(5000); }
+      else results.notCovered.push(`${tier}: token ${scenario}: chart step skipped (no people on the account).`);
       const notAvail = await page.locator('text=/not available/i').count().catch(() => 0);
       await page.evaluate(() => window.gmShowView && window.gmShowView('research.html'));
       await page.waitForSelector('#gmr-q', { timeout: 10000 }).catch(() => {});
+      if (!(await page.locator('#gmr-q').count())) results.notCovered.push(`${tier}: token ${scenario}: Research step skipped (#gmr-q not found).`);
       if (await page.locator('#gmr-q').count()) {
         await page.fill('#gmr-q', 'Einstein');
         await page.click('#gmr-search').catch(() => {});
@@ -339,8 +373,12 @@ async function runTokenTests(browser, tier, shot0) {
         if (c.status === 401 && !calls.slice(i + 1).some(l => l.url === c.url && l.status >= 200 && l.status < 300)) failed.push(c.url.replace(/^https?:\/\/[^/]+/, ''));
       });
       const uniq = [...new Set(failed)];
-      out[scenario] = { calls: calls.length, unrecovered401: uniq, chartNotAvailable: notAvail };
-      if (!calls.length) finding('medium', tier, 'token', `Token test ${scenario}: no API calls observed, the test did not exercise anything.`);
+      const saw401 = calls.some(c => c.status === 401);
+      out[scenario] = { calls: calls.length, saw401, renewals, unrecovered401: uniq, chartNotAvailable: notAvail };
+      if (!calls.length) finding('high', tier, 'token', `Token test ${scenario}: no API calls observed, the test did not exercise anything.`);
+      // Red-team fix 4: prove the token actually died. No 401 and no renewal means the dead token was never used,
+      // so a pass would prove nothing (for example if the hub keeps its token somewhere this test does not reach).
+      else if (!saw401 && !renewals) finding('high', tier, 'token', `Token test ${scenario} INCONCLUSIVE: no 401 and no renewal after killing the token, so the dead token was never exercised. Do not treat F-004/F-006 as fixed on this evidence.`);
       else if (uniq.length || notAvail) finding('critical', tier, 'token', `After the token dies (${scenario}), a member sees failures: ${uniq.length} call(s) never recovered (${uniq.slice(0, 4).join(', ')})${notAvail ? ', and "not available" is on screen' : ''}. Member standard: the token must renew invisibly.`);
     } catch (e) {
       finding('high', tier, 'token', `Token test ${scenario} could not run: ${e.message.split('\n')[0]}`);
@@ -396,7 +434,7 @@ async function runSequences(ctx, r, tier, tierNow, A, token, page, shot) {
     // Non-Pro: Tropical must save, anything else must be refused with 403.
     const keep = await setSystem(1);
     if (keep.status !== 200) finding('high', tier, 'entitlement', `Non-Pro saving Tropical (their only method) returned ${keep.status}, expected 200.`);
-    const other = ids.find(n => n !== 1);
+    const other = ids.find(n => n !== 1) || 2;   // red-team fix 10: test the gate even if the list offered to non-Pro is short
     if (other) {
       const no = await setSystem(other);
       seq.gate = no.status;
@@ -410,6 +448,7 @@ async function runSequences(ctx, r, tier, tierNow, A, token, page, shot) {
 
   // Pro: every system must have tonight's person with Type + Profile, and filters must still add up.
   seq.perSystem = {};
+  pendingRestore = () => setSystem(origSystem);
   try {
     for (const n of ids) {
       if (timeLeft() < 90000) { results.notCovered.push(`${tier}: calc systems from ${n} on not checked, out of time.`); break; }
@@ -430,21 +469,29 @@ async function runSequences(ctx, r, tier, tierNow, A, token, page, shot) {
     }
   } finally {
     const back = await setSystem(origSystem);
+    pendingRestore = null;
     if (back.status !== 200) finding('high', tier, 'runner', `Could not restore the QA account to calc system ${origSystem} (${back.status}).`);
   }
   // The hub still renders the chart after all that.
   await page.evaluate(i => window.gmOpenChart && window.gmOpenChart(i), id).catch(() => {});
   await page.waitForTimeout(4000);
   await shot('chart-after-sequences');
+  await chartCheck(page, tier, 'after edit and calc switches');
 }
 
 (async () => {
   // Edge on John's Windows laptop, Playwright's own Chromium on GitHub's Linux runners (no Edge there).
-  const browser = BROWSER === 'webkit'
-    ? await webkit.launch({ headless: true })
-    : await chromium.launch(process.platform === 'win32' ? { channel: 'msedge', headless: true } : { headless: true });
-  const guard = setTimeout(() => { finding('medium', '-', 'runner', 'Hit the script time cap; results are partial.'); write(); process.exit(3); }, MAX_MS);
+  let browser = null;
+  const guard = setTimeout(async () => {
+    finding('high', '-', 'runner', 'Hit the script time cap; results are partial.');
+    if (pendingRestore) { try { await Promise.race([pendingRestore(), new Promise(r => setTimeout(r, 15000))]); } catch {} }
+    write(); process.exit(3);
+  }, MAX_MS);
   try {
+    // Red-team fix 5: launch inside try, so a launch failure still writes tonight's results with its own run id.
+    browser = BROWSER === 'webkit'
+      ? await webkit.launch({ headless: true })
+      : await chromium.launch(process.platform === 'win32' ? { channel: 'msedge', headless: true } : { headless: true });
     for (const tier of TIERS) {
       if (!(tier in TIER_LEVEL)) { finding('low', tier, 'runner', 'Unknown tier name, skipped.'); continue; }
       if (timeLeft() < 90000) { results.notCovered.push(`${tier}: not run, out of time.`); continue; }
@@ -453,12 +500,36 @@ async function runSequences(ctx, r, tier, tierNow, A, token, page, shot) {
         results.tiers[tier].steps.token = await runTokenTests(browser, tier, async (name, pg) => { try { await pg.screenshot({ path: path.join(OUT, `${tier}-${name}.png`) }); } catch {} });
       }
     }
+  } catch (e) {
+    finding('blocker', '-', 'runner', `Run could not start: ${redact(e.message.split('\n')[0])}`);
   } finally {
     clearTimeout(guard);
-    await browser.close();
+    if (browser) await browser.close().catch(() => {});
     write();
+    // Red-team fix 9: a blocker or critical finding fails the step, so the Actions run is not green.
+    process.exitCode = results.findings.some(f => f.severity === 'blocker' || f.severity === 'critical') ? 1 : 0;
   }
 })();
+
+// Red-team fix 1: look at the chart itself, not just the view. The largest chart element must have real
+// size, and no error text may be on screen.
+async function chartCheck(page, tier, when) {
+  const st = await page.evaluate(() => {
+    const card = document.getElementById('cs-card') || document.getElementById('cs-content');
+    if (!card) return { ok: false, why: 'no chart card' };
+    let best = null, area = 0;
+    card.querySelectorAll('svg, object, img, iframe, canvas').forEach(el => {
+      const r = el.getBoundingClientRect(), a = r.width * r.height;
+      if (a > area && getComputedStyle(el).visibility !== 'hidden') { area = a; best = el; }
+    });
+    const err = /not available|something went wrong|error loading/i.test(card.innerText || '');
+    if (!best) return { ok: false, why: 'no chart element', err };
+    const r = best.getBoundingClientRect();
+    const loaded = best.tagName === 'IMG' ? (best.complete && best.naturalWidth > 0) : true;
+    return { ok: r.width > 200 && r.height > 200 && loaded && !err, tag: best.tagName, w: Math.round(r.width), h: Math.round(r.height), loaded, err };
+  }).catch(e => ({ ok: false, why: 'check failed: ' + e.message }));
+  if (!st.ok) finding('critical', tier, 'chart', `Chart ${when} is blank or broken: ${st.why || `${st.tag} ${st.w}x${st.h}, loaded=${st.loaded}`}${st.err ? ', error text on screen' : ''}.`);
+}
 
 function write() {
   // NONZERO guard for the whole run: if no tier got a hub token, nothing was tested, whatever else passed.

@@ -11,8 +11,8 @@ You run in the cloud with a checkout of this repo (`Genetic-matrix/gm-testing`).
 
 ## Steps
 1. `git pull`. Use today's UTC date `D` (`date -u +%F`); if `findings/D/` does not exist, use yesterday's.
-2. Read `findings/D/summary.md` and `results.json` (tier tests, Chromium), `findings/D/webkit/summary.md` (the same checks in WebKit, read-only), `findings/D/safari/summary.md` (REAL Safari on a Mac: PASS / FAIL / NOT COVERED per path) and `golden-master/captures/D/compare.md` (MaintVerify). If either is missing, the nightly run did not happen or failed: say so in the first line of the report.
-3. MaintVerify: these differences are known and already reported, do not raise them again: natal and topo design time (F-009), calendar `zodiac_acro` now filled, calendar_moon fixture settings edited. Anything else that differs is new.
+2. **Freshness check first:** `results.json` carries `startedAt` and `runId`. If `startedAt` is more than 12 hours before now, or `runId` is `local`, these are NOT tonight's results: the first line of the report says the nightly run did not produce results, and nothing from those files is reported as tonight's. Then read `findings/D/summary.md` and `results.json` (tier tests, Chromium), `findings/D/webkit/summary.md` (the same checks in WebKit, read-only), `findings/D/safari/summary.md` (REAL Safari on a Mac: PASS / FAIL / NOT COVERED per path) and `golden-master/captures/D/compare.md` (MaintVerify). If either is missing, the nightly run did not happen or failed: say so in the first line of the report.
+3. MaintVerify: the "vs baseline" differences for natal and topo design time (F-009), calendar `zodiac_acro` and the calendar_moon fixture settings are known. But the "vs previous capture" column is always read: any CHANGED there is a new regression, even in those modes. A checksum ABORT means someone edited a baseline: report it as critical.
 4. Compare with the last report (`findings/*/REPORT.md`, most recent before D) to separate new findings from repeats.
 5. Write `findings/D/REPORT.md`:
    - First line: did the run happen, how long, any blockers.

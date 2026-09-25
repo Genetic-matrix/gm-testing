@@ -47,6 +47,7 @@ jobs:
           npx playwright install --with-deps chromium webkit
 
       - name: Tier tests (login, facets, filters, create, sequences, token death)
+        id: tiers
         working-directory: routine
         continue-on-error: true
         env:
@@ -57,6 +58,7 @@ jobs:
         run: node nightly.js
 
       - name: WebKit pass (Safari engine early warning, read-only; NOT a Safari-on-Mac pass)
+        id: webkit
         working-directory: routine
         continue-on-error: true
         env:
@@ -69,6 +71,7 @@ jobs:
         run: node nightly.js
 
       - name: MaintVerify capture and compare
+        id: maintverify
         working-directory: golden-master
         continue-on-error: true
         env:
@@ -95,6 +98,14 @@ jobs:
           git commit -m "Nightly results $(date -u +%F)"
           git pull --rebase -q origin main
           git push
+
+      # Red-team fix 9: results are committed first, then the job goes red if any test step found a blocker,
+      # a critical finding, a failed MaintVerify mode or a new MaintVerify change. A bad night is never green.
+      - name: Fail the run if any test step failed
+        if: steps.tiers.outcome == 'failure' || steps.webkit.outcome == 'failure' || steps.maintverify.outcome == 'failure'
+        run: |
+          echo "::error::tiers=${{ steps.tiers.outcome }} webkit=${{ steps.webkit.outcome }} maintverify=${{ steps.maintverify.outcome }}"
+          exit 1
 
   # Real Safari on a GitHub Mac (approved by John 25 Sep, about $20-25/month of Mac minutes).
   # Not a substitute for the manual Safari-on-Mac check before go-live: NOT COVERED paths stay manual.
