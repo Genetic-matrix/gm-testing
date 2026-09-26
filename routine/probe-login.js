@@ -6,21 +6,31 @@
 const { execSync } = require('child_process');
 const k = (process.env.GM_TEST_LOGIN_KEY || execSync('reg query HKCU\\Environment /v GM_TEST_LOGIN_KEY', { encoding: 'utf8' })
   .match(/GM_TEST_LOGIN_KEY\s+REG_\w+\s+(.+)/)[1]).trim();
-const cf = (process.env.GM_CF_ACCESS_CLIENT_ID && process.env.GM_CF_ACCESS_CLIENT_SECRET)
-  ? { 'CF-Access-Client-Id': process.env.GM_CF_ACCESS_CLIENT_ID.trim(), 'CF-Access-Client-Secret': process.env.GM_CF_ACCESS_CLIENT_SECRET.trim() } : {};
+function envOrUser(name) {
+  if (process.env[name]) return process.env[name].trim();
+  try {
+    const out = require('child_process').execSync(`reg query HKCU\Environment /v ${name}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const m = out.match(new RegExp(name + '\s+REG_\w+\s+(.+)'));
+    return m ? m[1].trim() : '';
+  } catch { return ''; }
+}
+const CFI = envOrUser('GM_CF_ACCESS_CLIENT_ID'), CFS = envOrUser('GM_CF_ACCESS_CLIENT_SECRET');
+const cf = CFI && CFS ? { 'CF-Access-Client-Id': CFI, 'CF-Access-Client-Secret': CFS } : {};
+// Blocked = 401 (basic auth) or a redirect to the Cloudflare Access login. Anything else got through.
+const blocked = (s, loc) => s === 401 || /cloudflareaccess\.com/i.test(loc || '');
 const cases = [
-  ['real key', { ...cf, 'X-GM-Test-Key': k }, s => s !== 401],
-  ['fake key', { ...cf, 'X-GM-Test-Key': 'not-the-key-' + Date.now() }, s => s === 401],
-  ['no key', { ...cf }, s => s === 401],
+  ['real key', { ...cf, 'X-GM-Test-Key': k }, (s, loc) => !blocked(s, loc)],
+  ['fake key', { ...cf, 'X-GM-Test-Key': 'not-the-key-' + Date.now() }, (s, loc) => blocked(s, loc)],
+  ['no key', { ...cf }, (s, loc) => blocked(s, loc)],
 ];
 (async () => {
   let ok = true;
   for (const [lbl, h, pass] of cases) {
     const r = await fetch('https://www.staginggm.com/gm-test-login?account=plus', { headers: h, redirect: 'manual' });
-    const t = (await r.text()).split(k).join('***');
-    const good = pass(r.status);
+    let t = (await r.text()).split(k).join('***'); if (CFS) t = t.split(CFS).join('***');
+    const good = pass(r.status, r.headers.get('location'));
     ok = ok && good;
-    console.log(`${good ? 'PASS' : 'FAIL'}  ${lbl}: ${r.status} ${r.headers.get('location') || ''} ${r.headers.get('www-authenticate') || ''}`);
+    console.log(`${good ? 'PASS' : 'FAIL'}  ${lbl}: ${r.status} ${(r.headers.get('location') || '').split('?')[0]} ${r.headers.get('www-authenticate') || ''}  (Cloudflare token sent: ${Object.keys(cf).length ? 'yes' : 'no'})`);
     if (!good) console.log('   ' + t.replace(/<style[\s\S]*?<\/style>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 300));
   }
   process.exit(ok ? 0 : 1);

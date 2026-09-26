@@ -47,8 +47,16 @@ const LOGIN_KEY = (process.env.GM_TEST_LOGIN_KEY || (() => {
 })()).trim();
 // Cloudflare Access service token (optional): once staging moves from basic auth to Cloudflare Access,
 // these two headers get the run through Access. Secrets GM_CF_ACCESS_CLIENT_ID / GM_CF_ACCESS_CLIENT_SECRET.
-const CF_ID = (process.env.GM_CF_ACCESS_CLIENT_ID || '').trim();
-const CF_SECRET = (process.env.GM_CF_ACCESS_CLIENT_SECRET || '').trim();
+function envOrUser(name) {
+  if (process.env[name]) return process.env[name].trim();
+  try {
+    const out = require('child_process').execSync(`reg query HKCU\Environment /v ${name}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const m = out.match(new RegExp(name + '\s+REG_\w+\s+(.+)'));
+    return m ? m[1].trim() : '';
+  } catch { return ''; }
+}
+const CF_ID = envOrUser('GM_CF_ACCESS_CLIENT_ID');
+const CF_SECRET = envOrUser('GM_CF_ACCESS_CLIENT_SECRET');
 const AUTH_HEADERS = Object.assign({},
   LOGIN_KEY ? { 'X-GM-Test-Key': LOGIN_KEY } : {},
   CF_ID && CF_SECRET ? { 'CF-Access-Client-Id': CF_ID, 'CF-Access-Client-Secret': CF_SECRET } : {});
