@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-01",
+  "startedAt": "2026-10-01T12:05:03.363Z",
+  "runId": "local",
+  "base": "https://www.geneticmatrix.com",
+  "pages": 0,
+  "links": 0,
+  "broken": [],
+  "wrongLang": [],
+  "warnings": [],
+  "pageProblems": [],
+  "notCovered": [],
+  "blockers": [
+    "Cloudflare challenged the checker (403): no page could be checked. Needs the X-GM-Crawl-Key skip rule on live."
+  ],
+  "control": {
+    "url": "https://www.geneticmatrix.com/gm-linkcheck-control-do-not-create/",
+    "status": 403,
+    "notFound": false,
+    "challenged": true
+  },
+  "durationMin": 0
+}

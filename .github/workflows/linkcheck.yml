@@ -1,0 +1,63 @@
+# Nightly LIVE link check (John, 1 Oct 2026): every page in the live sitemaps and every internal link on them.
+# READ ONLY: page loads and GET requests, no logins, no forms, no writes.
+# Secrets (GitHub > Settings > Secrets and variables > Actions, never in chat or a file):
+#   GM_CRAWL_KEY           the X-GM-Crawl-Key value Joseph's Cloudflare skip rule on live accepts
+#   GM_SITEHEALTH_WEBHOOK  optional Slack incoming webhook (a bot posting to one channel) for the daily summary
+name: linkcheck-live
+
+on:
+  schedule:
+    - cron: '0 0 * * *'    # 00:00 UTC = 03:00 UTC+3, 04:00 Dubai; done well before the 08:14 open-items list
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: linkcheck
+  cancel-in-progress: false
+
+jobs:
+  linkcheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright and Chromium
+        working-directory: routine
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Check every live page and internal link
+        id: check
+        working-directory: routine
+        continue-on-error: true
+        env:
+          GM_CRAWL_KEY: ${{ secrets.GM_CRAWL_KEY }}
+          GM_SITEHEALTH_WEBHOOK: ${{ secrets.GM_SITEHEALTH_WEBHOOK }}
+          GM_LINKCHECK_MAX_MIN: '300'
+        run: node linkcheck.js
+
+      - name: Commit the summary (text only)
+        if: always()
+        run: |
+          git config user.name  "gm-nightly"
+          git config user.email "gm-nightly@users.noreply.github.com"
+          git add findings/linkcheck
+          git diff --cached --quiet && { echo "nothing new"; exit 0; }
+          git commit -m "Live link check $(date -u +%F)"
+          git pull --rebase -q origin main
+          git push
+
+      # A night with broken links, wrong-language links, page problems or a blocker is red, never green.
+      - name: Fail the run if anything was found
+        if: steps.check.outcome == 'failure'
+        run: |
+          echo "::error::Live link check found problems or was blocked: see findings/linkcheck/"
+          exit 1
