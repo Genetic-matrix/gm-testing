@@ -111,7 +111,9 @@ jobs:
   # Not a substitute for the manual Safari-on-Mac check before go-live: NOT COVERED paths stay manual.
   safari:
     needs: nightly
-    if: always()
+    # PAUSED (John, 1 Oct 2026) until the new staging server: Safari cannot get through Cloudflare Access or
+    # log in yet, so it failed at login every night. Re-enable by changing this back to: if: always()
+    if: false
     runs-on: macos-latest
     timeout-minutes: 20
     steps:
