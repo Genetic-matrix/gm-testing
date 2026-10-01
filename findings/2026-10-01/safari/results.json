@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-01",
+  "tier": "pro",
+  "paths": [
+    {
+      "n": 0,
+      "name": "Login and hub load",
+      "result": "FAIL",
+      "note": "no hub token: the cookie route is not in place yet, or login failed. Nothing else could be tested."
+    }
+  ]
+}
