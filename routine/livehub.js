@@ -133,6 +133,13 @@ async function runTier(browser, tier) {
   const consoleErrors = [];
   page.on('console', m => { if (m.type() === 'error') consoleErrors.push(redact(m.text()).slice(0, 300)); });
   page.on('pageerror', e => consoleErrors.push(redact('pageerror: ' + e.message).slice(0, 300)));
+  const htmlInsteadOfCode = [];
+  page.on('response', rs => {
+    const type = rs.request().resourceType();
+    const ct = (rs.headers()['content-type'] || '').toLowerCase();
+    if (['script', 'xhr', 'fetch'].includes(type) && ct.includes('text/html')) htmlInsteadOfCode.push(`${type} ${redact(rs.url().split('?')[0])} -> HTTP ${rs.status()} text/html`);
+  });
+  let tokenTestFrom = Infinity;   // console 401s after this point are the token test's own doing
   const shot = async n => { try { await page.screenshot({ path: path.join(OUT, `${tier}-${n}.png`) }); } catch {} };   // RT5: failures only
   try {
     const lg = await login(page, user, pass);
@@ -204,10 +211,17 @@ async function runTier(browser, tier) {
       const rr = await resp;
       await sleep(2000);
       const hit = await page.evaluate(() => /Einstein/i.test((document.getElementById('gm-research-root') || {}).innerText || ''));
-      if (!rr) finding('critical', tier, 'research', 'LIVE Research search sent no search request for "Einstein".');
-      else if (rr.status() !== 200) finding('critical', tier, 'research', `LIVE Research search returned HTTP ${rr.status()}.`);
-      else if (!hit) finding('critical', tier, 'research', 'LIVE Research search ran but shows no result for "Einstein".');
-      if (!rr || !hit) await shot('research');
+      // Celebrity pages are Plus and above (reference-gm-membership-tiers): Starter must be refused AND told why.
+      if (t < 1) {
+        const nudge = await page.evaluate(() => /upgrade|plus|plans?/i.test((document.getElementById('gm-research-root') || document.body).innerText || ''));
+        if (rr && rr.status() !== 402 && rr.status() !== 403) finding('critical', tier, 'entitlement', `LIVE: Starter Research search returned HTTP ${rr.status()}, expected a refusal (Research is Plus and above).`);
+        else if (!nudge) { finding('high', tier, 'research', 'LIVE: Starter is correctly refused Research, but sees no upgrade message: the search just fails silently.'); await shot('research'); }
+      } else {
+        if (!rr) finding('critical', tier, 'research', 'LIVE Research search sent no search request for "Einstein".');
+        else if (rr.status() !== 200) finding('critical', tier, 'research', `LIVE Research search returned HTTP ${rr.status()}.`);
+        else if (!hit) finding('critical', tier, 'research', 'LIVE Research search ran but shows no result for "Einstein".');
+        if (!rr || !hit) await shot('research');
+      }
     } else finding('critical', tier, 'research', 'LIVE Research view did not open (#gmr-q not found).');
 
     // RT10: token death must show the full chain: a 401, a refresh that returns a token, a 2xx retry of that call.
@@ -220,6 +234,7 @@ async function runTier(browser, tier) {
         seq.push({ kind: 'refresh', s: rs.status(), tok });
       }
     });
+    tokenTestFrom = consoleErrors.length;
     await page.evaluate(() => { window.GM_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjF9.expired'; try { localStorage.removeItem('gm_token'); } catch (e) {} });
     await page.evaluate(() => window.gmShowView('my-people.html')).catch(() => {}); await sleep(3000);
     if (ids[0]) { await page.evaluate(i => window.gmOpenChart(i), ids[0]).catch(() => {}); await sleep(5000); }
@@ -236,8 +251,10 @@ async function runTier(browser, tier) {
     finding('critical', tier, 'runner', 'Tier run crashed: ' + redact(e.message.split('\n')[0]));   // RT6
     await shot('crash');
   } finally {
-    const unknown = [...new Set(consoleErrors)].filter(m => !KNOWN_CONSOLE.some(re => re.test(m)));
+    const own401 = (m, i) => i >= tokenTestFrom && /status of 401/.test(m);
+    const unknown = [...new Set(consoleErrors.filter((m, i) => !own401(m, i)))].filter(m => !KNOWN_CONSOLE.some(re => re.test(m)) && !(TIERS[tier] < 1 && /status of 402/.test(m)));
     if (unknown.length) finding('high', tier, 'console', `${unknown.length} console error(s) on the LIVE hub.`, { sample: unknown.slice(0, 5) });
+    if (htmlInsteadOfCode.length) finding('high', tier, 'assets', `LIVE: ${htmlInsteadOfCode.length} script/data request(s) returned an HTML page instead (the cause of "Unexpected token '<'"): ${[...new Set(htmlInsteadOfCode)].slice(0, 4).join('; ')}`);
     await ctx.close();
   }
 }
