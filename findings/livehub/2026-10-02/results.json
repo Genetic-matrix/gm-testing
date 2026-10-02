@@ -1,229 +1,101 @@
 {
   "date": "2026-10-02",
-  "startedAt": "2026-10-02T08:50:06.201Z",
-  "runId": "36986252673",
+  "startedAt": "2026-10-02T08:54:38.234Z",
+  "runId": "36986680050",
   "tiers": {
     "starter": {
-      "tier": "starter"
+      "tier": "starter",
+      "tierClaim": 0,
+      "people": 0,
+      "chartsChecked": 0
     },
     "plus": {
-      "tier": "plus"
+      "tier": "plus",
+      "tierClaim": 1,
+      "people": 6,
+      "chartsChecked": 4
     },
     "advanced": {
-      "tier": "advanced"
+      "tier": "advanced",
+      "tierClaim": 2,
+      "people": 10,
+      "chartsChecked": 4
     },
     "pro": {
-      "tier": "pro"
+      "tier": "pro",
+      "tierClaim": 3,
+      "people": 16,
+      "chartsChecked": 4
     }
   },
   "findings": [
     {
-      "severity": "blocker",
+      "severity": "critical",
       "tier": "starter",
-      "area": "login",
-      "summary": "Logged in but the hub has no token: login failed or the hub bootstrap failed on live.",
-      "url": "https://www.geneticmatrix.com/"
-    },
-    {
-      "severity": "blocker",
-      "tier": "plus",
-      "area": "login",
-      "summary": "Logged in but the hub has no token: login failed or the hub bootstrap failed on live.",
-      "url": "https://www.geneticmatrix.com/"
-    },
-    {
-      "severity": "blocker",
-      "tier": "advanced",
-      "area": "login",
-      "summary": "Logged in but the hub has no token: login failed or the hub bootstrap failed on live.",
-      "url": "https://www.geneticmatrix.com/"
-    },
-    {
-      "severity": "blocker",
-      "tier": "pro",
-      "area": "login",
-      "summary": "Logged in but the hub has no token: login failed or the hub bootstrap failed on live.",
-      "url": "https://www.geneticmatrix.com/"
+      "area": "coverage",
+      "summary": "Live QA account has no people: seed it, or nothing below is tested."
     },
     {
       "severity": "critical",
-      "tier": "-",
-      "area": "read-only guard",
-      "summary": "The live hub tried 20 write request(s) during a read-only session; all were blocked.",
+      "tier": "starter",
+      "area": "research",
+      "summary": "LIVE Research search returned HTTP 402."
+    },
+    {
+      "severity": "critical",
+      "tier": "starter",
+      "area": "token",
+      "summary": "LIVE token-death test INCONCLUSIVE: no 401 after killing the token, so the dead token was never exercised."
+    },
+    {
+      "severity": "high",
+      "tier": "starter",
+      "area": "console",
+      "summary": "2 console error(s) on the LIVE hub.",
       "sample": [
-        {
-          "tier": "starter",
-          "method": "POST",
-          "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
-          "action": ""
-        },
-        {
-          "tier": "starter",
-          "method": "POST",
-          "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442752739add6c5",
-          "action": ""
-        },
-        {
-          "tier": "starter",
-          "method": "POST",
-          "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
-          "action": "SignUser"
-        },
-        {
-          "tier": "starter",
-          "method": "POST",
-          "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442754fdf29d6c5",
-          "action": ""
-        },
-        {
-          "tier": "starter",
-          "method": "POST",
-          "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
-          "action": ""
-        },
-        {
-          "tier": "plus",
-          "method": "POST",
-          "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
-          "action": ""
-        },
-        {
-          "tier": "plus",
-          "method": "POST",
-          "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442762c9f1705c7",
-          "action": ""
-        },
-        {
-          "tier": "plus",
-          "method": "POST",
-          "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
-          "action": "SignUser"
-        }
+        "pageerror: Unexpected token '<'",
+        "Failed to load resource: the server responded with a status of 402 ()"
+      ]
+    },
+    {
+      "severity": "high",
+      "tier": "plus",
+      "area": "console",
+      "summary": "2 console error(s) on the LIVE hub.",
+      "sample": [
+        "pageerror: Unexpected token '<'",
+        "Failed to load resource: the server responded with a status of 401 ()"
+      ]
+    },
+    {
+      "severity": "high",
+      "tier": "advanced",
+      "area": "console",
+      "summary": "2 console error(s) on the LIVE hub.",
+      "sample": [
+        "pageerror: Unexpected token '<'",
+        "Failed to load resource: the server responded with a status of 401 ()"
+      ]
+    },
+    {
+      "severity": "high",
+      "tier": "pro",
+      "area": "console",
+      "summary": "2 console error(s) on the LIVE hub.",
+      "sample": [
+        "pageerror: Unexpected token '<'",
+        "Failed to load resource: the server responded with a status of 401 ()"
       ]
     }
   ],
-  "blockedWrites": [
-    {
-      "tier": "starter",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
-      "action": ""
-    },
-    {
-      "tier": "starter",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442752739add6c5",
-      "action": ""
-    },
-    {
-      "tier": "starter",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
-      "action": "SignUser"
-    },
-    {
-      "tier": "starter",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442754fdf29d6c5",
-      "action": ""
-    },
-    {
-      "tier": "starter",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
-      "action": ""
-    },
-    {
-      "tier": "plus",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
-      "action": ""
-    },
-    {
-      "tier": "plus",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442762c9f1705c7",
-      "action": ""
-    },
-    {
-      "tier": "plus",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
-      "action": "SignUser"
-    },
-    {
-      "tier": "plus",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a4427653da8e05c7",
-      "action": ""
-    },
-    {
-      "tier": "plus",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
-      "action": ""
-    },
-    {
-      "tier": "advanced",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
-      "action": ""
-    },
-    {
-      "tier": "advanced",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a4427730febbd6bb",
-      "action": ""
-    },
-    {
-      "tier": "advanced",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
-      "action": "SignUser"
-    },
-    {
-      "tier": "advanced",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a44277593943d6bb",
-      "action": ""
-    },
-    {
-      "tier": "advanced",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
-      "action": ""
-    },
-    {
-      "tier": "pro",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
-      "action": ""
-    },
-    {
-      "tier": "pro",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a44278359a4d05c7",
-      "action": ""
-    },
-    {
-      "tier": "pro",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
-      "action": "SignUser"
-    },
-    {
-      "tier": "pro",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442785c5de205c7",
-      "action": ""
-    },
-    {
-      "tier": "pro",
-      "method": "POST",
-      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
-      "action": ""
-    }
+  "blockedWrites": [],
+  "notCovered": [
+    "starter: type filter not tested (the seed has 0 distinct value(s); needs 2+).",
+    "starter: authority filter not tested (the seed has 0 distinct value(s); needs 2+).",
+    "starter: stale-nonce renewal (hub open 12-24 h) not tested on live; covered on staging.",
+    "plus: stale-nonce renewal (hub open 12-24 h) not tested on live; covered on staging.",
+    "advanced: stale-nonce renewal (hub open 12-24 h) not tested on live; covered on staging.",
+    "pro: stale-nonce renewal (hub open 12-24 h) not tested on live; covered on staging."
   ],
-  "notCovered": [],
-  "durationMin": 3
+  "durationMin": 6
 }
