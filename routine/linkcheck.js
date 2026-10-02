@@ -57,7 +57,7 @@ const cache = new Map();   // url -> { hops, finalUrl, status, notFound, error }
 async function resolve(url, keepBody) {
   if (cache.has(url) && !keepBody) return cache.get(url);
   const hops = [];
-  let cur = url, res = null, status = 0, body = '', error = '';
+  let cur = url, res = null, status = 0, body = '', error = '', robotsHeader = '';
   for (let i = 0; i < 6; i++) {
     await sleep(DELAY_MS);
     const host = new URL(cur).hostname;
@@ -75,6 +75,7 @@ async function resolve(url, keepBody) {
     if (status >= 300 && status < 400 && loc) { const next = new URL(loc, cur).toString(); hops.push({ from: cur, status, to: next }); cur = next; continue; }
     if (LIVE_HOST.test(new URL(cur).hostname)) body = await res.text().catch(() => '');
     if (status >= 300 && status < 400 && !loc) break;
+    robotsHeader = res.headers()['x-robots-tag'] || '';
     break;
   }
   const title = (body.match(/<title[^>]*>([^<]*)</i) || [])[1] || '';
@@ -82,7 +83,7 @@ async function resolve(url, keepBody) {
   const challenged = (status === 403 || status === 503) && (/cf-chl|challenge-platform|Just a moment/i.test(body) || /__cf_chl/.test(cur));
   if (challenged) { challengedCount++; if (firstChallengeAfter === null) firstChallengeAfter = cache.size; }
   const out = { hops, finalUrl: cur, status, error, challenged, notFound: NOT_FOUND.test(title + ' ' + h1.replace(/<[^>]+>/g, ' ')) };
-  if (keepBody) { const o2 = { ...out, body }; cache.set(url, out); return o2; }
+  if (keepBody) { const o2 = { ...out, body, robotsHeader }; cache.set(url, out); return o2; }
   cache.set(url, out);
   return out;
 }
@@ -121,6 +122,51 @@ function coveragePlan(all) {
 
 // Find the sitemaps the way search engines do: robots.txt "Sitemap:" lines first, then the usual WordPress
 // addresses. Every fetch is logged, so a run that finds nothing says exactly why.
+// hreflang code -> the language the URL prefix should show (langOf); x-default is skipped.
+const HREFLANG_TO_LANG = { en: 'en', de: 'de', es: 'es', fr: 'fr', it: 'it', nl: 'nl', 'pt-pt': 'pt-pt', pt: 'pt-pt', 'pt-PT': 'pt-pt', hi: 'hi' };
+const seo = { errors: [], warnings: [], titles: new Map(), checked: 0 };
+const attr = (tag, name) => { const m = tag.match(new RegExp(name + '\\s*=\\s*["\']([^"\']*)["\']', 'i')); return m ? m[1] : null; };
+function seoCheck(page, finalUrl, html, robotsHeader) {
+  seo.checked++;
+  const head = (html.match(/<head[\s\S]*?<\/head>/i) || [html.slice(0, 60000)])[0];
+  const pageLang = langOf(finalUrl);
+  const err = (type, detail) => seo.errors.push({ type, page, detail });
+  const warn = (type, detail) => seo.warnings.push({ type, page, detail });
+  // noindex: a page in the sitemap must not tell Google to ignore it.
+  const robotsMeta = [...head.matchAll(/<meta[^>]+>/gi)].map(m => m[0]).filter(t => /name\s*=\s*["'](robots|googlebot)["']/i.test(t)).map(t => attr(t, 'content') || '').join(' ');
+  if (/noindex/i.test(robotsMeta + ' ' + robotsHeader)) err('noindex', `listed in the sitemap but says noindex (${(robotsMeta || robotsHeader).trim()})`);
+  // canonical
+  const canonTag = [...head.matchAll(/<link[^>]+>/gi)].map(m => m[0]).find(t => /rel\s*=\s*["']canonical["']/i.test(t));
+  const canon = canonTag ? attr(canonTag, 'href') : null;
+  if (!canon) warn('canonical-missing', 'no canonical tag');
+  else {
+    let cu; try { cu = new URL(canon, finalUrl).toString(); } catch { cu = canon; }
+    if (langOf(cu) !== pageLang) err('canonical-language', `canonical points to another language: ${cu}`);
+    else if (norm(cu).replace(/\/$/, '') !== norm(finalUrl).replace(/\/$/, '')) err('canonical-elsewhere', `canonical points to a different page: ${cu}`);
+  }
+  // hreflang alternates: each must point to a page in that language, and the page should list itself.
+  const alts = [...head.matchAll(/<link[^>]+>/gi)].map(m => m[0]).filter(t => /rel\s*=\s*["']alternate["']/i.test(t) && /hreflang/i.test(t)).map(t => ({ code: attr(t, 'hreflang') || '', href: attr(t, 'href') || '' }));
+  if (alts.length) {
+    let self = false;
+    for (const a of alts) {
+      if (/x-default/i.test(a.code)) continue;
+      const want = HREFLANG_TO_LANG[a.code] || HREFLANG_TO_LANG[a.code.toLowerCase()];
+      let au; try { au = new URL(a.href, finalUrl).toString(); } catch { continue; }
+      if (want && langOf(au) !== want) err('hreflang-mismatch', `hreflang="${a.code}" points to a ${langOf(au)} page: ${au}`);
+      if (norm(au).replace(/\/$/, '') === norm(finalUrl).replace(/\/$/, '')) self = true;
+    }
+    if (!self) warn('hreflang-no-self', 'hreflang alternates do not include the page itself');
+  }
+  // <html lang> must match the address language.
+  const hl = ((html.match(/<html[^>]*\slang\s*=\s*["']([^"']+)["']/i) || [])[1] || '').toLowerCase();
+  if (!hl) warn('html-lang-missing', 'no lang attribute on <html>');
+  else { const want = HREFLANG_TO_LANG[hl] || HREFLANG_TO_LANG[hl.split('-')[0]] || hl.split('-')[0]; if (want !== pageLang && !(pageLang === 'pt-pt' && hl.startsWith('pt'))) err('html-lang-mismatch', `<html lang="${hl}"> on a ${pageLang} address`); }
+  // title
+  const title = ((head.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '').replace(/\s+/g, ' ').trim();
+  if (!title) err('title-missing', 'no <title>');
+  else { const k = pageLang + '|' + title; if (seo.titles.has(k)) warn('title-duplicate', `same title as ${seo.titles.get(k)}: "${title.slice(0, 80)}"`); else if (seo.titles.size < 300000) seo.titles.set(k, page); }
+}
+
 const pageGroup = new Map();   // url -> 'celeb' | 'category' | 'calendar' | 'core', from the sitemap it came from
 async function sitemapPages(log) {
   const H = KEY ? { 'X-GM-Crawl-Key': KEY } : {};
@@ -205,6 +251,7 @@ async function sitemapPages(log) {
         if (t.error || t.status >= 400 || t.notFound) { results.pageProblems.push({ page: p, status: t.status, finalUrl: t.finalUrl, why: t.error || (t.notFound ? 'not-found page' : `HTTP ${t.status}`) }); continue; }
         if (norm(t.finalUrl) !== norm(p)) results.warnings.push({ type: 'sitemap-redirect', page: p, finalUrl: t.finalUrl });
         const html = t.body || '';
+        seoCheck(p, t.finalUrl, html, t.robotsHeader || '');
         const hrefs = [...html.matchAll(/<a\s[^>]*href=["']([^"'#][^"']*)["']/gi)].map(m => { try { return new URL(m[1].replace(/&amp;/g, '&'), t.finalUrl).toString(); } catch { return null; } }).filter(Boolean);
         const pageLang = langOf(p);
         for (const h of [...new Set(hrefs)]) {
@@ -241,15 +288,18 @@ async function sitemapPages(log) {
       ? `LIVE sitemap COUNT ONLY ${today} (no pages checked): sitemaps list ${results.sitemapUnique} unique pages.`
       : results.blockers.length
       ? `LIVE link check ${today}: BLOCKED. ${results.blockers.join(' ')}`
-      : `LIVE link check ${today}: ${results.pages} pages, ${results.links} internal links. ${broken.length} broken, ${wrong.length} wrong-language, ${results.pageProblems.length} page problems, ${warns} warnings. Control URL detected as broken: yes.`;
+      : `LIVE link check ${today}: ${results.pages} pages, ${results.links} internal links. ${broken.length} broken, ${wrong.length} wrong-language, ${results.pageProblems.length} page problems, ${seo.errors.length} SEO errors, ${warns} warnings. Control URL detected as broken: yes.`;
     const md = [`# ${head}`, '', `Run ${results.runId}, started ${results.startedAt}, ${results.durationMin} min. Tonight: ${results.coverage ? `${results.coverage.core} core pages in full, ${results.coverage.sample} sampled celebrity/category pages, rotating slice ${results.coverage.slice}; every page covered every ${results.coverage.fullCycleNights} nights.` : ''} Sitemaps list ${results.sitemapUnique ?? '?'} unique pages: ${Object.entries(results.sitemapByLang || {}).map(([k, v]) => `${k} ${v}`).join(', ')}.`, '',
       '## Broken links', '', ...(broken.length ? broken.map(b => `- ${b.link} -> ${b.finalUrl || ''} (${b.why}) on ${b.pages.length} page(s), e.g. ${b.pages[0]}`) : ['None.']), '',
       '## Wrong language', '', ...(wrong.length ? wrong.map(w => `- ${w.link} on a ${w.pageLang} page ends on ${w.finalUrl} (${w.finalLang}), ${w.pages.length} page(s), e.g. ${w.pages[0]}`) : ['None.']), '',
       '## Pages that do not load', '', ...(results.pageProblems.length ? results.pageProblems.map(x => `- ${x.page}: ${x.why} (${x.finalUrl})`) : ['None.']), '',
       '## Warnings (for a human to judge)', '', ...(warns ? results.warnings.slice(0, 300).map(w => `- ${w.type}: ${w.link || w.page} -> ${w.finalUrl}${w.hops ? ` (${w.hops} hops)` : ''}${w.to !== undefined ? ` (${w.from} to ${w.to})` : ''}`) : ['None.']), '',
+      '## SEO', '', `${seo.checked} pages checked. Errors: ${Object.entries(seo.errors.reduce((m, e) => (m[e.type] = (m[e.type] || 0) + 1, m), {})).map(([k, v]) => `${k} ${v}`).join(', ') || 'none'}. Warnings: ${Object.entries(seo.warnings.reduce((m, e) => (m[e.type] = (m[e.type] || 0) + 1, m), {})).map(([k, v]) => `${k} ${v}`).join(', ') || 'none'}.`, '',
+      ...Object.values(seo.errors.reduce((m, e) => { (m[e.type] = m[e.type] || []).push(e); return m; }, {})).flatMap(list => list.slice(0, 10).map(e => `- ERROR ${e.type}: ${e.page}: ${e.detail}`)), '',
       ...(results.sitemapLog && results.sitemapLog.length ? ['## Sitemaps read', '', ...results.sitemapLog.slice(0, 60).map(x => `- ${x}`), ''] : []),
       ...(results.notCovered.length ? ['## Not covered', '', ...[...new Set(results.notCovered)].slice(0, 50).map(n => `- ${n}`), ''] : [])].join('\n');
     fs.writeFileSync(path.join(OUT, 'summary.md'), md);
+    results.seo = { checked: seo.checked, errors: seo.errors.slice(0, 5000), warnings: seo.warnings.slice(0, 5000), errorCount: seo.errors.length, warningCount: seo.warnings.length };
     fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 2));
     console.log(md.slice(0, 4000));
     const hook = (process.env.GM_SITEHEALTH_WEBHOOK || '').trim();
@@ -258,6 +308,6 @@ async function sitemapPages(log) {
       if (broken.length > 15 || wrong.length > 10) lines.push('Full list in gm-testing findings/linkcheck/' + today + '/summary.md');
       await fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: lines.join('\n') }) }).catch(() => {});
     }
-    process.exitCode = results.blockers.length || broken.length || wrong.length || results.pageProblems.length ? 1 : 0;
+    process.exitCode = results.blockers.length || broken.length || wrong.length || results.pageProblems.length || seo.errors.length ? 1 : 0;
   }
 })();
