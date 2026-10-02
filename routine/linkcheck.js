@@ -199,7 +199,10 @@ async function sitemapPages(log) {
     const group = (arr, key) => Object.values(arr.reduce((m, x) => { const k = x[key]; (m[k] = m[k] || { ...x, pages: [] }).pages.push(x.page); return m; }, {}));
     const broken = group(results.broken, 'link'), wrong = group(results.wrongLang, 'link');
     const warns = results.warnings.length;
-    const head = results.blockers.length
+    const countOnly = process.env.GM_LINKCHECK_SITEMAP_ONLY === '1';
+    const head = countOnly
+      ? `LIVE sitemap COUNT ONLY ${today} (no pages checked): sitemaps list ${results.sitemapUnique} unique pages.`
+      : results.blockers.length
       ? `LIVE link check ${today}: BLOCKED. ${results.blockers.join(' ')}`
       : `LIVE link check ${today}: ${results.pages} pages, ${results.links} internal links. ${broken.length} broken, ${wrong.length} wrong-language, ${results.pageProblems.length} page problems, ${warns} warnings. Control URL detected as broken: yes.`;
     const md = [`# ${head}`, '', `Run ${results.runId}, started ${results.startedAt}, ${results.durationMin} min. Sitemaps list ${results.sitemapUnique ?? '?'} unique pages: ${Object.entries(results.sitemapByLang || {}).map(([k, v]) => `${k} ${v}`).join(', ')}.`, '',
@@ -213,7 +216,7 @@ async function sitemapPages(log) {
     fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 2));
     console.log(md.slice(0, 4000));
     const hook = (process.env.GM_SITEHEALTH_WEBHOOK || '').trim();
-    if (hook) {
+    if (hook && !countOnly) {   // a counting run checks nothing, so it never posts a result
       const lines = [head, ...broken.slice(0, 15).map(b => `• BROKEN ${b.link} (${b.why}), ${b.pages.length} page(s)`), ...wrong.slice(0, 10).map(w => `• WRONG LANGUAGE ${w.link} on ${w.pageLang} pages ends on ${w.finalLang}`)];
       if (broken.length > 15 || wrong.length > 10) lines.push('Full list in gm-testing findings/linkcheck/' + today + '/summary.md');
       await fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: lines.join('\n') }) }).catch(() => {});
