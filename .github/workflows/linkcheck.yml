@@ -13,6 +13,9 @@ on:
       sitemap_only:
         description: '1 = only count the sitemap pages, check nothing'
         default: '0'
+      urls:
+        description: 'Spot check: comma-separated addresses to check, nothing else'
+        default: ''
 
 permissions:
   contents: write
@@ -47,6 +50,7 @@ jobs:
           GM_SITEHEALTH_WEBHOOK: ${{ secrets.GM_SITEHEALTH_WEBHOOK }}
           GM_LINKCHECK_MAX_MIN: '300'
           GM_LINKCHECK_SITEMAP_ONLY: ${{ inputs.sitemap_only || '0' }}
+          GM_LINKCHECK_URLS: ${{ inputs.urls || '' }}
         run: node linkcheck.js
 
       - name: Commit the summary (text only)

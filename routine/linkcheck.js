@@ -221,6 +221,23 @@ async function sitemapPages(log) {
     if (ctl.challenged) results.blockers.push('Cloudflare challenged the checker (403): no page could be checked. Needs the X-GM-Crawl-Key skip rule on live.');
     else if (!(ctl.status >= 400 || ctl.notFound)) results.blockers.push(`Control URL ${CONTROL_BAD} did NOT read as broken (status ${ctl.status}): the not-found detection is not working, so this run proves nothing.`);
 
+    // Spot-check mode: check exactly these addresses (comma-separated), nothing else.
+    const probe = (process.env.GM_LINKCHECK_URLS || '').split(',').map(x => x.trim()).filter(Boolean);
+    if (probe.length && !results.blockers.length) {
+      results.probe = [];
+      for (const u of probe) {
+        const t = await resolve(norm(u.startsWith('http') ? u : BASE + u), true);
+        const canon = ((t.body || '').match(/<link[^>]+rel=["']canonical["'][^>]*>/i) || [''])[0].match(/href=["']([^"']+)["']/i);
+        const title = (((t.body || '').match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '').trim();
+        results.probe.push({ url: u, status: t.status, hops: t.hops.map(h => `${h.status} -> ${h.to}`), finalUrl: t.finalUrl, notFound: t.notFound, challenged: t.challenged, canonical: canon ? canon[1] : null, title: title.slice(0, 90) });
+      }
+      const md = ['# Spot check ' + today, '', '| Address | Result | Redirects | Canonical | Title |', '|---|---|---|---|---|',
+        ...results.probe.map(r => `| ${r.url} | ${r.challenged ? 'CLOUDFLARE CHALLENGE' : r.notFound ? 'NOT FOUND page' : 'HTTP ' + r.status} | ${r.hops.join(' / ') || 'none'} | ${r.canonical || '-'} | ${r.title.replace(/\|/g, '/')} |`), ''].join('\n');
+      fs.writeFileSync(path.join(OUT, 'spotcheck.md'), md);
+      console.log(md);
+      await browser.close().catch(() => {});
+      process.exit(0);
+    }
     results.sitemapLog = [];
     const allPages = results.blockers.length ? [] : await sitemapPages(results.sitemapLog);
     results.sitemapUnique = allPages.length;
