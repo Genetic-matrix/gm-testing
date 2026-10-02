@@ -229,6 +229,17 @@ async function sitemapPages(log) {
     results.coverage = plan.stats;
     const ex = {}; for (const p of allPages) { const g = pageGroup.get(p) || 'core'; (ex[g] = ex[g] || []); if (ex[g].length < 8) ex[g].push(p); }
     results.examples = ex;
+    // Celebrity slugs with a stray trailing hyphen (e.g. /celebrity/ali-a-/), counted per celebrity (one slug serves 7 calc pages x 7 languages).
+    const badSlugs = new Map();
+    for (const p of allPages) {
+      const m = new URL(p).pathname.match(/\/celebrity\/([^/]+)\//);
+      if (m && /-$/.test(m[1])) { const sl = m[1]; badSlugs.set(sl, (badSlugs.get(sl) || 0) + 1); }
+    }
+    const fixed = new Set([...badSlugs.keys()].map(x => x.replace(/-+$/, '')));
+    const allSlugs = new Set(); for (const p of allPages) { const m = new URL(p).pathname.match(/\/celebrity\/([^/]+)\//); if (m) allSlugs.add(m[1]); }
+    const clashes = [...badSlugs.keys()].filter(x => allSlugs.has(x.replace(/-+$/, '')));
+    results.trailingHyphenSlugs = { celebrities: badSlugs.size, pages: [...badSlugs.values()].reduce((a, b) => a + b, 0), clashWithExisting: clashes.length, clashExamples: clashes.slice(0, 20), examples: [...badSlugs.keys()].slice(0, 40) };
+    fs.writeFileSync(path.join(OUT, 'trailing-hyphen-slugs.txt'), [...badSlugs.keys()].sort().join('\n') + '\n');
     const pages = process.env.GM_LINKCHECK_SITEMAP_ONLY === '1' ? [] : plan.pages.slice(0, MAX_PAGES);
     if (!results.blockers.length && !allPages.length) results.blockers.push(`No pages found in the sitemaps. Tried: ${results.sitemapLog.join(' | ')}`);
     const htmlOf = new Map();
@@ -289,7 +300,7 @@ async function sitemapPages(log) {
       : results.blockers.length
       ? `LIVE link check ${today}: BLOCKED. ${results.blockers.join(' ')}`
       : `LIVE link check ${today}: ${results.pages} pages, ${results.links} internal links. ${broken.length} broken, ${wrong.length} wrong-language, ${results.pageProblems.length} page problems, ${seo.errors.length} SEO errors, ${warns} warnings. Control URL detected as broken: yes.`;
-    const md = [`# ${head}`, '', `Run ${results.runId}, started ${results.startedAt}, ${results.durationMin} min. Tonight: ${results.coverage ? `${results.coverage.core} core pages in full, ${results.coverage.sample} sampled celebrity/category pages, rotating slice ${results.coverage.slice}; every page covered every ${results.coverage.fullCycleNights} nights.` : ''} Sitemaps list ${results.sitemapUnique ?? '?'} unique pages: ${Object.entries(results.sitemapByLang || {}).map(([k, v]) => `${k} ${v}`).join(', ')}.`, '',
+    const md = [`# ${head}`, '', `Run ${results.runId}, started ${results.startedAt}, ${results.durationMin} min. Tonight: ${results.coverage ? `${results.coverage.core} core pages in full, ${results.coverage.sample} sampled celebrity/category pages, rotating slice ${results.coverage.slice}; every page covered every ${results.coverage.fullCycleNights} nights.` : ''} Celebrity slugs ending in a hyphen: ${results.trailingHyphenSlugs ? `${results.trailingHyphenSlugs.celebrities} celebrities, ${results.trailingHyphenSlugs.pages} pages, ${results.trailingHyphenSlugs.clashWithExisting} would clash with an existing slug if trimmed` : '?'}. Sitemaps list ${results.sitemapUnique ?? '?'} unique pages: ${Object.entries(results.sitemapByLang || {}).map(([k, v]) => `${k} ${v}`).join(', ')}.`, '',
       '## Broken links', '', ...(broken.length ? broken.map(b => `- ${b.link} -> ${b.finalUrl || ''} (${b.why}) on ${b.pages.length} page(s), e.g. ${b.pages[0]}`) : ['None.']), '',
       '## Wrong language', '', ...(wrong.length ? wrong.map(w => `- ${w.link} on a ${w.pageLang} page ends on ${w.finalUrl} (${w.finalLang}), ${w.pages.length} page(s), e.g. ${w.pages[0]}`) : ['None.']), '',
       '## Pages that do not load', '', ...(results.pageProblems.length ? results.pageProblems.map(x => `- ${x.page}: ${x.why} (${x.finalUrl})`) : ['None.']), '',
