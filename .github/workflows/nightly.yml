@@ -30,15 +30,18 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Check secrets are set
+      # A missing secret skips only the step that needs it, never the whole night (fix 2 Oct: one missing
+      # secret had stopped every run at this step since 24 Sep).
+      - name: Report missing secrets (non-fatal)
+        id: secrets
         env:
           GM_TEST_LOGIN_KEY: ${{ secrets.GM_TEST_LOGIN_KEY }}
           GM_MAINTVERIFY_SECRET: ${{ secrets.GM_MAINTVERIFY_SECRET }}
+          GM_CF_ACCESS_CLIENT_ID: ${{ secrets.GM_CF_ACCESS_CLIENT_ID }}
         run: |
-          missing=0
-          [ -n "$GM_TEST_LOGIN_KEY" ] || { echo "::error::Secret GM_TEST_LOGIN_KEY is not set"; missing=1; }
-          [ -n "$GM_MAINTVERIFY_SECRET" ] || { echo "::error::Secret GM_MAINTVERIFY_SECRET is not set"; missing=1; }
-          exit $missing
+          [ -n "$GM_TEST_LOGIN_KEY" ] && echo "login=yes" >> "$GITHUB_OUTPUT" || echo "::warning::Secret GM_TEST_LOGIN_KEY is not set: tier tests will report a login blocker"
+          [ -n "$GM_MAINTVERIFY_SECRET" ] && echo "maintverify=yes" >> "$GITHUB_OUTPUT" || echo "::warning::Secret GM_MAINTVERIFY_SECRET is not set: MaintVerify step skipped"
+          [ -n "$GM_CF_ACCESS_CLIENT_ID" ] || echo "::warning::No Cloudflare Access service token: staging behind Access will block the tier tests"
 
       - name: Install Playwright and Chromium
         working-directory: routine
@@ -72,6 +75,7 @@ jobs:
 
       - name: MaintVerify capture and compare
         id: maintverify
+        if: steps.secrets.outputs.maintverify == 'yes'
         working-directory: golden-master
         continue-on-error: true
         env:
