@@ -26,7 +26,9 @@ const BASE = (process.env.GM_LIVE_BASE || 'https://www.geneticmatrix.com').repla
 const KEY = (process.env.GM_CRAWL_KEY || '').trim();
 const MAX_MS = (Number(process.env.GM_LINKCHECK_MAX_MIN) || 300) * 60000;
 const MAX_PAGES = Number(process.env.GM_LINKCHECK_MAX_PAGES) || Infinity;
-const DELAY_MS = 400;                      // throttle between requests (bursts got 429s)
+const DELAY_MS = 250;                      // per-worker pause between requests
+const WORKERS = Number(process.env.GM_LINKCHECK_WORKERS) || 4;   // parallel fetchers (39k pages do not fit one-at-a-time)
+let challengedCount = 0, firstChallengeAfter = null;
 const LANGS = ['de', 'es', 'fr', 'it', 'nl', 'pt-pt', 'pt'];
 const LIVE_HOST = /(^|\.)geneticmatrix\.com$/i;
 const NON_LIVE_HOST = /(^|\.)(staginggm\.com|gmtxdev\.com)$/i;
@@ -52,8 +54,8 @@ let ctx, req;
 const cache = new Map();   // url -> { hops, finalUrl, status, notFound, error }
 
 // Follow redirects one hop at a time so the chain is recorded. GET, never POST.
-async function resolve(url) {
-  if (cache.has(url)) return cache.get(url);
+async function resolve(url, keepBody) {
+  if (cache.has(url) && !keepBody) return cache.get(url);
   const hops = [];
   let cur = url, res = null, status = 0, body = '', error = '';
   for (let i = 0; i < 6; i++) {
@@ -72,12 +74,15 @@ async function resolve(url) {
     const loc = res.headers()['location'];
     if (status >= 300 && status < 400 && loc) { const next = new URL(loc, cur).toString(); hops.push({ from: cur, status, to: next }); cur = next; continue; }
     if (LIVE_HOST.test(new URL(cur).hostname)) body = await res.text().catch(() => '');
+    if (status >= 300 && status < 400 && !loc) break;
     break;
   }
   const title = (body.match(/<title[^>]*>([^<]*)</i) || [])[1] || '';
   const h1 = (body.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) || [])[1] || '';
-  const challenged = status === 403 && /cf-chl|challenge-platform|Just a moment/i.test(body);
+  const challenged = (status === 403 || status === 503) && (/cf-chl|challenge-platform|Just a moment/i.test(body) || /__cf_chl/.test(cur));
+  if (challenged) { challengedCount++; if (firstChallengeAfter === null) firstChallengeAfter = cache.size; }
   const out = { hops, finalUrl: cur, status, error, challenged, notFound: NOT_FOUND.test(title + ' ' + h1.replace(/<[^>]+>/g, ' ')) };
+  if (keepBody) { const o2 = { ...out, body }; cache.set(url, out); return o2; }
   cache.set(url, out);
   return out;
 }
@@ -135,34 +140,48 @@ async function sitemapPages(log) {
     results.sitemapLog = [];
     const pages = results.blockers.length ? [] : (await sitemapPages(results.sitemapLog)).slice(0, MAX_PAGES);
     if (!results.blockers.length && !pages.length) results.blockers.push(`No pages found in the sitemaps. Tried: ${results.sitemapLog.join(' | ')}`);
-    const page = await ctx.newPage();
-    for (const p of pages) {
-      if (timeLeft() < 120000) { results.notCovered.push(`Out of time after ${results.pages} of ${pages.length} pages.`); break; }
-      await sleep(DELAY_MS);
-      const r = await page.goto(p, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(e => null);
-      results.pages++;
-      const status = r ? r.status() : 0;
-      const finalUrl = page.url();
-      const text = await page.evaluate(() => (document.title + ' ' + ((document.querySelector('h1') || {}).innerText || '') + ' ' + (document.body ? document.body.innerText.length : 0))).catch(() => '');
-      if (!r || status >= 400 || NOT_FOUND.test(text)) { results.pageProblems.push({ page: p, status, finalUrl, why: !r ? 'no response' : status >= 400 ? `HTTP ${status}` : 'not-found page' }); continue; }
-      if (norm(finalUrl) !== norm(p)) results.warnings.push({ type: 'sitemap-redirect', page: p, finalUrl });
-      const hrefs = await page.$$eval('a[href]', as => as.map(a => a.href)).catch(() => []);
-      const pageLang = langOf(p), pageSection = sectionOf(p);
-      for (const h of [...new Set(hrefs)]) {
-        let u; try { u = new URL(h); } catch { continue; }
-        if (!/^https?:$/.test(u.protocol)) continue;
-        if (NON_LIVE_HOST.test(u.hostname)) { results.broken.push({ page: p, link: h, why: `links to non-live host ${u.hostname} (members get 401 or a login page)` }); continue; }
-        if (!LIVE_HOST.test(u.hostname)) continue;   // external sites are out of scope
-        results.links++;
-        const t = await resolve(norm(h));
-        if (t.challenged) { results.notCovered.push(`Cloudflare challenged ${h}`); continue; }
-        if (t.error || t.status >= 400 || t.notFound) { results.broken.push({ page: p, link: h, finalUrl: t.finalUrl, status: t.status, why: t.error || (t.notFound ? 'ends on a not-found page' : `HTTP ${t.status}`) }); continue; }
-        const finalLang = langOf(t.finalUrl);
-        if (finalLang !== pageLang && langOf(h) === pageLang) results.wrongLang.push({ page: p, pageLang, link: h, finalUrl: t.finalUrl, finalLang });
-        if (t.hops.length > 1) results.warnings.push({ type: 'chain', page: p, link: h, hops: t.hops.length, finalUrl: t.finalUrl });
-        if (t.hops.length && sectionOf(h) && sectionOf(t.finalUrl) !== sectionOf(h)) results.warnings.push({ type: 'section', page: p, link: h, finalUrl: t.finalUrl, from: sectionOf(h), to: sectionOf(t.finalUrl) });
+    const htmlOf = new Map();
+    // Fetch a page with a plain GET (the same hop-by-hop resolve as links), keeping its HTML for link parsing.
+    const fetchPage = async p => {
+      return resolve(norm(p), true);
+    };
+    let idx = 0, stop = false;
+    const worker = async () => {
+      while (!stop && idx < pages.length) {
+        if (timeLeft() < 120000) { stop = true; results.notCovered.push(`Out of time after ${results.pages} of ${pages.length} pages.`); break; }
+        const p = pages[idx++];
+        const t = await fetchPage(p);
+        if (t.challenged) {
+          // A challenge means Cloudflare is blocking the checker, not that the page is broken: stop and report it.
+          if (challengedCount >= 5) { stop = true; results.blockers.push(`Cloudflare started challenging the checker after ${results.pages} pages (403 challenge). The X-GM-Crawl-Key rule must also skip rate limiting and bot scoring.`); }
+          continue;
+        }
+        results.pages++;
+        if (t.error || t.status >= 400 || t.notFound) { results.pageProblems.push({ page: p, status: t.status, finalUrl: t.finalUrl, why: t.error || (t.notFound ? 'not-found page' : `HTTP ${t.status}`) }); continue; }
+        if (norm(t.finalUrl) !== norm(p)) results.warnings.push({ type: 'sitemap-redirect', page: p, finalUrl: t.finalUrl });
+        const html = t.body || '';
+        const hrefs = [...html.matchAll(/<a\s[^>]*href=["']([^"'#][^"']*)["']/gi)].map(m => { try { return new URL(m[1].replace(/&amp;/g, '&'), t.finalUrl).toString(); } catch { return null; } }).filter(Boolean);
+        const pageLang = langOf(p);
+        for (const h of [...new Set(hrefs)]) {
+          let u; try { u = new URL(h); } catch { continue; }
+          if (!/^https?:$/.test(u.protocol)) continue;
+          if (NON_LIVE_HOST.test(u.hostname)) { results.broken.push({ page: p, link: h, why: `links to non-live host ${u.hostname} (members get 401 or a login page)` }); continue; }
+          if (!LIVE_HOST.test(u.hostname)) continue;
+          if (/\/wp-login\.php|loginSocial=|\/wp-admin\/|\/feed\/?$|\/cdn-cgi\//.test(u.pathname + u.search)) continue;   // logins, admin, feeds, Cloudflare: not content links
+          results.links++;
+          const r2 = await resolve(norm(h));
+          if (r2.challenged) continue;
+          const offSite = !LIVE_HOST.test(new URL(r2.finalUrl).hostname);
+          if (offSite) continue;   // a link that redirects to another site is out of scope
+          if (r2.error || r2.status >= 400 || r2.notFound) { results.broken.push({ page: p, link: h, finalUrl: r2.finalUrl, status: r2.status, why: r2.error || (r2.notFound ? 'ends on a not-found page' : `HTTP ${r2.status}`) }); continue; }
+          const finalLang = langOf(r2.finalUrl);
+          if (finalLang !== pageLang && langOf(h) === pageLang) results.wrongLang.push({ page: p, pageLang, link: h, finalUrl: r2.finalUrl, finalLang });
+          if (r2.hops.length > 1) results.warnings.push({ type: 'chain', page: p, link: h, hops: r2.hops.length, finalUrl: r2.finalUrl });
+          if (r2.hops.length && sectionOf(h) && sectionOf(r2.finalUrl) !== sectionOf(h)) results.warnings.push({ type: 'section', page: p, link: h, finalUrl: r2.finalUrl, from: sectionOf(h), to: sectionOf(r2.finalUrl) });
+        }
       }
-    }
+    };
+    await Promise.all(Array.from({ length: WORKERS }, worker));
   } catch (e) {
     results.blockers.push('Run crashed: ' + e.message.split('\n')[0]);
   } finally {

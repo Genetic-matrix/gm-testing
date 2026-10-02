@@ -1,0 +1,4 @@
+# Byte-exact files: checksummed baselines and captures must never have line endings converted.
+golden-master/vladimir-baselines-*/** -text
+golden-master/captures/** -text
+golden-master/ephe/** -text
