@@ -1,7 +1,7 @@
 {
   "date": "2026-10-02",
-  "startedAt": "2026-10-02T11:43:55.169Z",
-  "runId": "37002559387",
+  "startedAt": "2026-10-02T12:18:25.415Z",
+  "runId": "37005845658",
   "base": "https://www.geneticmatrix.com",
   "pages": 0,
   "links": 0,
@@ -283,6 +283,45 @@
     "nl": 745861,
     "pt-pt": 745796,
     "pt": 65
+  },
+  "coverage": {
+    "core": 840,
+    "sample": 2100,
+    "slice": "31 of 131 (40000 pages)",
+    "fullCycleNights": 131,
+    "planned": 42930
+  },
+  "examples": {
+    "core": [
+      "https://www.geneticmatrix.com/",
+      "https://www.geneticmatrix.com/privacy/",
+      "https://www.geneticmatrix.com/plans-features/",
+      "https://www.geneticmatrix.com/talking-charts/",
+      "https://www.geneticmatrix.com/foundation-talking-chart/",
+      "https://www.geneticmatrix.com/variable-talking-chart/",
+      "https://www.geneticmatrix.com/shadow-talking-chart/",
+      "https://www.geneticmatrix.com/sleep-talking-chart/"
+    ],
+    "category": [
+      "https://www.geneticmatrix.com/de/celebrities/type/pe/tropical/",
+      "https://www.geneticmatrix.com/de/celebrities/type/pe/sidereal/",
+      "https://www.geneticmatrix.com/de/celebrities/type/pe/vedic/",
+      "https://www.geneticmatrix.com/de/celebrities/type/pe/draconic/",
+      "https://www.geneticmatrix.com/de/celebrities/type/pe/true-sidereal/",
+      "https://www.geneticmatrix.com/de/celebrities/type/pe/13-sign/",
+      "https://www.geneticmatrix.com/de/celebrities/type/pe/j2000/",
+      "https://www.geneticmatrix.com/de/celebrities/type/pse/tropical/"
+    ],
+    "celeb": [
+      "https://www.geneticmatrix.com/de/celebrity/ali-a-/",
+      "https://www.geneticmatrix.com/de/celebrity/ali-a-/sidereal/",
+      "https://www.geneticmatrix.com/de/celebrity/ali-a-/vedic/",
+      "https://www.geneticmatrix.com/de/celebrity/ali-a-/draconic/",
+      "https://www.geneticmatrix.com/de/celebrity/ali-a-/true-sidereal/",
+      "https://www.geneticmatrix.com/de/celebrity/ali-a-/13-sign/",
+      "https://www.geneticmatrix.com/de/celebrity/ali-a-/j2000/",
+      "https://www.geneticmatrix.com/de/celebrity/angelino-/"
+    ]
   },
   "durationMin": 2
 }
