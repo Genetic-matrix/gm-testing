@@ -1,6 +1,6 @@
-# LIVE hub check 2026-10-02 (read-only): 4/4 tiers reached the hub, 7 finding(s), 0 write(s) blocked.
+# LIVE hub check 2026-10-02 (read-only): 4/4 tiers reached the hub, 11 finding(s), 0 write(s) blocked.
 
-Run 36986680050, started 2026-10-02T08:54:38.234Z, 6 min.
+Run 36987417081, started 2026-10-02T09:02:28.769Z, 6 min.
 
 - **starter**: tier claim 0, people 0, chart tabs checked 0
 - **plus**: tier claim 1, people 6, chart tabs checked 4
@@ -10,12 +10,16 @@ Run 36986680050, started 2026-10-02T08:54:38.234Z, 6 min.
 ## Findings
 
 - [critical] starter / coverage: Live QA account has no people: seed it, or nothing below is tested.
-- [critical] starter / research: LIVE Research search returned HTTP 402.
 - [critical] starter / token: LIVE token-death test INCONCLUSIVE: no 401 after killing the token, so the dead token was never exercised.
-- [high] starter / console: 2 console error(s) on the LIVE hub.
-- [high] plus / console: 2 console error(s) on the LIVE hub.
-- [high] advanced / console: 2 console error(s) on the LIVE hub.
-- [high] pro / console: 2 console error(s) on the LIVE hub.
+- [high] starter / research: LIVE: Starter is correctly refused Research, but sees no upgrade message: the search just fails silently.
+- [high] starter / console: 1 console error(s) on the LIVE hub.
+- [high] starter / assets: LIVE: 3 script/data request(s) returned an HTML page instead (the cause of "Unexpected token '<'"): xhr https://www.geneticmatrix.com/wp-admin/admin-ajax.php -> HTTP 200 text/html; script https://www.geneticmatrix.com/wp-content/themes/geneticmatrix/hub-assets/hub-location.js -> HTTP 301 text/html
+- [high] plus / console: 1 console error(s) on the LIVE hub.
+- [high] plus / assets: LIVE: 3 script/data request(s) returned an HTML page instead (the cause of "Unexpected token '<'"): xhr https://www.geneticmatrix.com/wp-admin/admin-ajax.php -> HTTP 200 text/html; script https://www.geneticmatrix.com/wp-content/themes/geneticmatrix/hub-assets/hub-location.js -> HTTP 301 text/html
+- [high] advanced / console: 1 console error(s) on the LIVE hub.
+- [high] advanced / assets: LIVE: 3 script/data request(s) returned an HTML page instead (the cause of "Unexpected token '<'"): xhr https://www.geneticmatrix.com/wp-admin/admin-ajax.php -> HTTP 200 text/html; script https://www.geneticmatrix.com/wp-content/themes/geneticmatrix/hub-assets/hub-location.js -> HTTP 301 text/html
+- [high] pro / console: 1 console error(s) on the LIVE hub.
+- [high] pro / assets: LIVE: 3 script/data request(s) returned an HTML page instead (the cause of "Unexpected token '<'"): xhr https://www.geneticmatrix.com/wp-admin/admin-ajax.php -> HTTP 200 text/html; script https://www.geneticmatrix.com/wp-content/themes/geneticmatrix/hub-assets/hub-location.js -> HTTP 301 text/html
 
 ## Not covered
 

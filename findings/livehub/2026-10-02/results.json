@@ -1,7 +1,7 @@
 {
   "date": "2026-10-02",
-  "startedAt": "2026-10-02T08:54:38.234Z",
-  "runId": "36986680050",
+  "startedAt": "2026-10-02T09:02:28.769Z",
+  "runId": "36987417081",
   "tiers": {
     "starter": {
       "tier": "starter",
@@ -38,54 +38,74 @@
     {
       "severity": "critical",
       "tier": "starter",
-      "area": "research",
-      "summary": "LIVE Research search returned HTTP 402."
-    },
-    {
-      "severity": "critical",
-      "tier": "starter",
       "area": "token",
       "summary": "LIVE token-death test INCONCLUSIVE: no 401 after killing the token, so the dead token was never exercised."
     },
     {
       "severity": "high",
       "tier": "starter",
+      "area": "research",
+      "summary": "LIVE: Starter is correctly refused Research, but sees no upgrade message: the search just fails silently."
+    },
+    {
+      "severity": "high",
+      "tier": "starter",
       "area": "console",
-      "summary": "2 console error(s) on the LIVE hub.",
+      "summary": "1 console error(s) on the LIVE hub.",
       "sample": [
-        "pageerror: Unexpected token '<'",
-        "Failed to load resource: the server responded with a status of 402 ()"
+        "pageerror: Unexpected token '<'"
       ]
+    },
+    {
+      "severity": "high",
+      "tier": "starter",
+      "area": "assets",
+      "summary": "LIVE: 3 script/data request(s) returned an HTML page instead (the cause of \"Unexpected token '<'\"): xhr https://www.geneticmatrix.com/wp-admin/admin-ajax.php -> HTTP 200 text/html; script https://www.geneticmatrix.com/wp-content/themes/geneticmatrix/hub-assets/hub-location.js -> HTTP 301 text/html"
     },
     {
       "severity": "high",
       "tier": "plus",
       "area": "console",
-      "summary": "2 console error(s) on the LIVE hub.",
+      "summary": "1 console error(s) on the LIVE hub.",
       "sample": [
-        "pageerror: Unexpected token '<'",
-        "Failed to load resource: the server responded with a status of 401 ()"
+        "pageerror: Unexpected token '<'"
       ]
+    },
+    {
+      "severity": "high",
+      "tier": "plus",
+      "area": "assets",
+      "summary": "LIVE: 3 script/data request(s) returned an HTML page instead (the cause of \"Unexpected token '<'\"): xhr https://www.geneticmatrix.com/wp-admin/admin-ajax.php -> HTTP 200 text/html; script https://www.geneticmatrix.com/wp-content/themes/geneticmatrix/hub-assets/hub-location.js -> HTTP 301 text/html"
     },
     {
       "severity": "high",
       "tier": "advanced",
       "area": "console",
-      "summary": "2 console error(s) on the LIVE hub.",
+      "summary": "1 console error(s) on the LIVE hub.",
       "sample": [
-        "pageerror: Unexpected token '<'",
-        "Failed to load resource: the server responded with a status of 401 ()"
+        "pageerror: Unexpected token '<'"
       ]
+    },
+    {
+      "severity": "high",
+      "tier": "advanced",
+      "area": "assets",
+      "summary": "LIVE: 3 script/data request(s) returned an HTML page instead (the cause of \"Unexpected token '<'\"): xhr https://www.geneticmatrix.com/wp-admin/admin-ajax.php -> HTTP 200 text/html; script https://www.geneticmatrix.com/wp-content/themes/geneticmatrix/hub-assets/hub-location.js -> HTTP 301 text/html"
     },
     {
       "severity": "high",
       "tier": "pro",
       "area": "console",
-      "summary": "2 console error(s) on the LIVE hub.",
+      "summary": "1 console error(s) on the LIVE hub.",
       "sample": [
-        "pageerror: Unexpected token '<'",
-        "Failed to load resource: the server responded with a status of 401 ()"
+        "pageerror: Unexpected token '<'"
       ]
+    },
+    {
+      "severity": "high",
+      "tier": "pro",
+      "area": "assets",
+      "summary": "LIVE: 3 script/data request(s) returned an HTML page instead (the cause of \"Unexpected token '<'\"): xhr https://www.geneticmatrix.com/wp-admin/admin-ajax.php -> HTTP 200 text/html; script https://www.geneticmatrix.com/wp-content/themes/geneticmatrix/hub-assets/hub-location.js -> HTTP 301 text/html"
     }
   ],
   "blockedWrites": [],
