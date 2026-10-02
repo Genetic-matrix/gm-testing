@@ -1,9 +1,11 @@
 # READ-ONLY check of the LIVE hub, logged in as the live QA accounts (John, 2 Oct 2026; red-teamed 2 Oct).
-# Manual only until John has seen a first run; then a nightly schedule is added.
+# Nightly from 2 Oct (John approved after the first runs), and by hand from the Actions tab.
 # Secrets: GM_LIVE_QA_<TIER>_USER / _PASSWORD (STARTER PLUS ADVANCED PRO), GM_CRAWL_KEY.
 name: livehub-readonly
 
 on:
+  schedule:
+    - cron: '0 1 * * *'    # 01:00 UTC = 04:00 UTC+3, 05:00 Dubai; done before the 07:00 morning report
   workflow_dispatch: {}
 
 permissions:
