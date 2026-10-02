@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-02",
+  "startedAt": "2026-10-02T05:20:15.180Z",
+  "runId": "36968422233",
+  "base": "https://www.geneticmatrix.com",
+  "pages": 0,
+  "links": 0,
+  "broken": [],
+  "wrongLang": [],
+  "warnings": [],
+  "pageProblems": [],
+  "notCovered": [],
+  "blockers": [
+    "No pages found in the sitemaps."
+  ],
+  "control": {
+    "url": "https://www.geneticmatrix.com/gm-linkcheck-control-do-not-create/",
+    "status": 301,
+    "notFound": true,
+    "challenged": false
+  },
+  "durationMin": 0
+}
