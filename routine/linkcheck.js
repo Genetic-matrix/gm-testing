@@ -82,22 +82,35 @@ async function resolve(url) {
   return out;
 }
 
-async function sitemapPages() {
+// Find the sitemaps the way search engines do: robots.txt "Sitemap:" lines first, then the usual WordPress
+// addresses. Every fetch is logged, so a run that finds nothing says exactly why.
+async function sitemapPages(log) {
+  const H = KEY ? { 'X-GM-Crawl-Key': KEY } : {};
+  const get = async u => {
+    await sleep(DELAY_MS);
+    const r = await req.get(u, { headers: H, failOnStatusCode: false, timeout: 60000 }).catch(e => ({ err: e.message.split('\n')[0] }));
+    if (r.err) { log.push(`${u}: ${r.err}`); return null; }
+    const body = await r.text().catch(() => '');
+    log.push(`${u}: ${r.status()} ${(r.headers()['content-type'] || '').split(';')[0]} ${body.length} bytes${/cf-chl|Just a moment/i.test(body) ? ' (Cloudflare challenge)' : ''}${r.status() === 200 && !/<loc>/i.test(body) && !/^Sitemap:/im.test(body) ? ' (no <loc> entries) starts: ' + body.slice(0, 80).replace(/\s+/g, ' ') : ''}`);
+    return r.status() === 200 ? body : null;
+  };
+  const queue = [];
+  const robots = await get(BASE + '/robots.txt');
+  if (robots) for (const m of robots.matchAll(/^\s*Sitemap:\s*(\S+)/gim)) queue.push(m[1]);
+  queue.push(BASE + '/sitemap_index.xml', BASE + '/sitemap.xml', BASE + '/wp-sitemap.xml');
   const seen = new Set(), pages = [];
-  const queue = [BASE + '/sitemap_index.xml'];
-  while (queue.length) {
+  while (queue.length && seen.size < 500) {
     const u = queue.shift();
     if (seen.has(u)) continue;
     seen.add(u);
-    await sleep(DELAY_MS);
-    const r = await req.get(u, { headers: KEY ? { 'X-GM-Crawl-Key': KEY } : {}, failOnStatusCode: false, timeout: 60000 }).catch(() => null);
-    const body = r ? await r.text() : '';
-    if (!r || r.status() !== 200) { pages.sitemapError = `${u}: ${r ? r.status() : 'no response'}${/cf-chl|Just a moment/i.test(body) ? ' (Cloudflare challenge)' : ''}`; continue; }
-    for (const m of body.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)) (/\.xml(\?|$)/.test(m[1]) ? queue : pages).push(m[1].replace(/&amp;/g, '&'));
+    const body = await get(u);
+    if (!body) continue;
+    for (const m of body.matchAll(/<loc>\s*(?:<!\[CDATA\[)?\s*([^<\s\]]+)/gi)) {
+      const loc = m[1].replace(/&amp;/g, '&');
+      (/\.xml(\.gz)?(\?|$)/i.test(loc) ? queue : pages).push(loc);
+    }
   }
-  const uniq = [...new Set(pages)];
-  uniq.sitemapError = pages.sitemapError;
-  return uniq;
+  return [...new Set(pages)];
 }
 
 (async () => {
@@ -119,8 +132,9 @@ async function sitemapPages() {
     if (ctl.challenged) results.blockers.push('Cloudflare challenged the checker (403): no page could be checked. Needs the X-GM-Crawl-Key skip rule on live.');
     else if (!(ctl.status >= 400 || ctl.notFound)) results.blockers.push(`Control URL ${CONTROL_BAD} did NOT read as broken (status ${ctl.status}): the not-found detection is not working, so this run proves nothing.`);
 
-    const pages = results.blockers.length ? [] : (await sitemapPages()).slice(0, MAX_PAGES);
-    if (!results.blockers.length && !pages.length) results.blockers.push(`No pages found in the sitemaps${pages.sitemapError ? ': ' + pages.sitemapError : ''}.`);
+    results.sitemapLog = [];
+    const pages = results.blockers.length ? [] : (await sitemapPages(results.sitemapLog)).slice(0, MAX_PAGES);
+    if (!results.blockers.length && !pages.length) results.blockers.push(`No pages found in the sitemaps. Tried: ${results.sitemapLog.join(' | ')}`);
     const page = await ctx.newPage();
     for (const p of pages) {
       if (timeLeft() < 120000) { results.notCovered.push(`Out of time after ${results.pages} of ${pages.length} pages.`); break; }
@@ -166,6 +180,7 @@ async function sitemapPages() {
       '## Wrong language', '', ...(wrong.length ? wrong.map(w => `- ${w.link} on a ${w.pageLang} page ends on ${w.finalUrl} (${w.finalLang}), ${w.pages.length} page(s), e.g. ${w.pages[0]}`) : ['None.']), '',
       '## Pages that do not load', '', ...(results.pageProblems.length ? results.pageProblems.map(x => `- ${x.page}: ${x.why} (${x.finalUrl})`) : ['None.']), '',
       '## Warnings (for a human to judge)', '', ...(warns ? results.warnings.slice(0, 300).map(w => `- ${w.type}: ${w.link || w.page} -> ${w.finalUrl}${w.hops ? ` (${w.hops} hops)` : ''}${w.to !== undefined ? ` (${w.from} to ${w.to})` : ''}`) : ['None.']), '',
+      ...(results.sitemapLog && results.sitemapLog.length ? ['## Sitemaps read', '', ...results.sitemapLog.slice(0, 60).map(x => `- ${x}`), ''] : []),
       ...(results.notCovered.length ? ['## Not covered', '', ...[...new Set(results.notCovered)].slice(0, 50).map(n => `- ${n}`), ''] : [])].join('\n');
     fs.writeFileSync(path.join(OUT, 'summary.md'), md);
     fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 2));
