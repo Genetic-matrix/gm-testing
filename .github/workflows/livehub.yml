@@ -1,0 +1,72 @@
+# READ-ONLY check of the LIVE hub, logged in as the live QA accounts (John, 2 Oct 2026; red-teamed 2 Oct).
+# Manual only until John has seen a first run; then a nightly schedule is added.
+# Secrets: GM_LIVE_QA_<TIER>_USER / _PASSWORD (STARTER PLUS ADVANCED PRO), GM_CRAWL_KEY.
+name: livehub-readonly
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: livehub
+  cancel-in-progress: false
+
+jobs:
+  livehub:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright and Chromium
+        working-directory: routine
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Live hub, read-only, all four tiers
+        id: check
+        working-directory: routine
+        continue-on-error: true
+        env:
+          GM_CRAWL_KEY: ${{ secrets.GM_CRAWL_KEY }}
+          GM_LIVE_QA_STARTER_USER: ${{ secrets.GM_LIVE_QA_STARTER_USER }}
+          GM_LIVE_QA_STARTER_PASSWORD: ${{ secrets.GM_LIVE_QA_STARTER_PASSWORD }}
+          GM_LIVE_QA_PLUS_USER: ${{ secrets.GM_LIVE_QA_PLUS_USER }}
+          GM_LIVE_QA_PLUS_PASSWORD: ${{ secrets.GM_LIVE_QA_PLUS_PASSWORD }}
+          GM_LIVE_QA_ADVANCED_USER: ${{ secrets.GM_LIVE_QA_ADVANCED_USER }}
+          GM_LIVE_QA_ADVANCED_PASSWORD: ${{ secrets.GM_LIVE_QA_ADVANCED_PASSWORD }}
+          GM_LIVE_QA_PRO_USER: ${{ secrets.GM_LIVE_QA_PRO_USER }}
+          GM_LIVE_QA_PRO_PASSWORD: ${{ secrets.GM_LIVE_QA_PRO_PASSWORD }}
+        run: node livehub.js
+
+      - name: Keep failure screenshots with the run (private, 7 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: livehub-${{ github.run_id }}
+          path: findings/livehub/
+          retention-days: 7
+
+      - name: Commit the summary (text only)
+        if: always()
+        run: |
+          git config user.name  "gm-nightly"
+          git config user.email "gm-nightly@users.noreply.github.com"
+          git add findings/livehub
+          git diff --cached --quiet && { echo "nothing new"; exit 0; }
+          git commit -m "Live hub check $(date -u +%F)"
+          git pull --rebase -q origin main
+          git push
+
+      - name: Fail the run if anything was found
+        if: steps.check.outcome == 'failure'
+        run: |
+          echo "::error::Live hub check found problems or was blocked: see findings/livehub/"
+          exit 1
