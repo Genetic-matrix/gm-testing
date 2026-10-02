@@ -110,10 +110,14 @@ async function sitemapPages(log) {
     seen.add(u);
     const body = await get(u);
     if (!body) continue;
+    let nLoc = 0, nAlt = 0;
     for (const m of body.matchAll(/<loc>\s*(?:<!\[CDATA\[)?\s*([^<\s\]]+)/gi)) {
       const loc = m[1].replace(/&amp;/g, '&');
-      (/\.xml(\.gz)?(\?|$)/i.test(loc) ? queue : pages).push(loc);
+      if (/\.xml(\.gz)?(\?|$)/i.test(loc)) queue.push(loc); else { pages.push(loc); nLoc++; }
     }
+    // Other languages are often listed as hreflang alternates inside each <url>, not as their own <loc>.
+    for (const m of body.matchAll(/<xhtml:link[^>]*\shref=["']([^"']+)["']/gi)) { pages.push(m[1].replace(/&amp;/g, '&')); nAlt++; }
+    if (nLoc || nAlt) log.push(`  ${u.split('/').pop()}: ${nLoc} <loc>, ${nAlt} alternates`);
   }
   return [...new Set(pages)];
 }
@@ -138,8 +142,12 @@ async function sitemapPages(log) {
     else if (!(ctl.status >= 400 || ctl.notFound)) results.blockers.push(`Control URL ${CONTROL_BAD} did NOT read as broken (status ${ctl.status}): the not-found detection is not working, so this run proves nothing.`);
 
     results.sitemapLog = [];
-    const pages = results.blockers.length ? [] : (await sitemapPages(results.sitemapLog)).slice(0, MAX_PAGES);
-    if (!results.blockers.length && !pages.length) results.blockers.push(`No pages found in the sitemaps. Tried: ${results.sitemapLog.join(' | ')}`);
+    const allPages = results.blockers.length ? [] : await sitemapPages(results.sitemapLog);
+    results.sitemapUnique = allPages.length;
+    const byLang = {}; for (const p of allPages) { const l = langOf(p); byLang[l] = (byLang[l] || 0) + 1; }
+    results.sitemapByLang = byLang;
+    const pages = process.env.GM_LINKCHECK_SITEMAP_ONLY === '1' ? [] : allPages.slice(0, MAX_PAGES);
+    if (!results.blockers.length && !allPages.length) results.blockers.push(`No pages found in the sitemaps. Tried: ${results.sitemapLog.join(' | ')}`);
     const htmlOf = new Map();
     // Fetch a page with a plain GET (the same hop-by-hop resolve as links), keeping its HTML for link parsing.
     const fetchPage = async p => {
@@ -194,7 +202,7 @@ async function sitemapPages(log) {
     const head = results.blockers.length
       ? `LIVE link check ${today}: BLOCKED. ${results.blockers.join(' ')}`
       : `LIVE link check ${today}: ${results.pages} pages, ${results.links} internal links. ${broken.length} broken, ${wrong.length} wrong-language, ${results.pageProblems.length} page problems, ${warns} warnings. Control URL detected as broken: yes.`;
-    const md = [`# ${head}`, '', `Run ${results.runId}, started ${results.startedAt}, ${results.durationMin} min.`, '',
+    const md = [`# ${head}`, '', `Run ${results.runId}, started ${results.startedAt}, ${results.durationMin} min. Sitemaps list ${results.sitemapUnique ?? '?'} unique pages: ${Object.entries(results.sitemapByLang || {}).map(([k, v]) => `${k} ${v}`).join(', ')}.`, '',
       '## Broken links', '', ...(broken.length ? broken.map(b => `- ${b.link} -> ${b.finalUrl || ''} (${b.why}) on ${b.pages.length} page(s), e.g. ${b.pages[0]}`) : ['None.']), '',
       '## Wrong language', '', ...(wrong.length ? wrong.map(w => `- ${w.link} on a ${w.pageLang} page ends on ${w.finalUrl} (${w.finalLang}), ${w.pages.length} page(s), e.g. ${w.pages[0]}`) : ['None.']), '',
       '## Pages that do not load', '', ...(results.pageProblems.length ? results.pageProblems.map(x => `- ${x.page}: ${x.why} (${x.finalUrl})`) : ['None.']), '',
