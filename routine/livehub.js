@@ -21,7 +21,8 @@ const HUB = BASE + '/user-home/';   // live hub address (John, 2 Oct)
 const KEY = (process.env.GM_CRAWL_KEY || '').trim();
 const LIVE_HOST = /(^|\.)geneticmatrix\.com$/i;
 const ANALYTICS = /(google-analytics|googletagmanager|doubleclick|facebook\.(com|net)|hotjar|clarity\.ms|bing\.com|tiktok|pinterest|linkedin|cookieyes|plausible|segment)/i;
-const AJAX_ALLOW = /(^|&)action=(gm_hub_refresh_token|gm_hub_version|gm_hub_logout_url|_ajaxTooltip)(&|$)/;
+// SignUser is GM's own login handler (the /login/ form posts it), seen on the first live run 2 Oct.
+const AJAX_ALLOW = /(^|&)action=(SignUser|gm_hub_refresh_token|gm_hub_version|gm_hub_logout_url|_ajaxTooltip)(&|$)/;
 const TIERS = { starter: 0, plus: 1, advanced: 2, pro: 3 };
 const EXPECTED_MIN_TIER = { type_full: 0, profile: 0, authority: 0, cross: 3, definition: 3, determination: 3, environment: 3, motivation: 3, trajectory: 3, view: 3, variable: 3, channels: 3 };
 const KNOWN_CONSOLE = [/CookieYes|website URL has changed/i, /blockedbyclient|ERR_BLOCKED_BY_CLIENT/i];
@@ -51,7 +52,9 @@ async function guard(ctx, tier) {
       const isLogin = LIVE_HOST.test(u.hostname) && (/^\/login\/?$/.test(u.pathname) || /\/wp-login\.php$/.test(u.pathname));
       const isAjaxOk = LIVE_HOST.test(u.hostname) && /\/admin-ajax\.php$/.test(u.pathname) && AJAX_ALLOW.test(rq.postData() || '');
       const isAuth = LIVE_HOST.test(u.hostname) && /\/api\/auth\/(wp-bootstrap|refresh)$/.test(u.pathname);
-      if (!(isLogin || isAjaxOk || isAuth)) {
+      // Cloudflare's own scripts (bot detection, RUM beacon) post to /cdn-cgi/; they carry no GM data.
+      const isCloudflare = LIVE_HOST.test(u.hostname) && /^\/cdn-cgi\//.test(u.pathname);
+      if (!(isLogin || isAjaxOk || isAuth || isCloudflare)) {
         const action = ((rq.postData() || '').match(/(^|&)action=([\w-]+)/) || [])[2];
         results.blockedWrites.push({ tier, method: m, url: redact(u.origin + u.pathname), action: action || '' });
         return route.abort('blockedbyclient');
