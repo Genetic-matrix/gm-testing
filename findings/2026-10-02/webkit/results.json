@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-02",
+  "startedAt": "2026-10-02T06:37:31.466Z",
+  "runId": "36974368391",
+  "base": "https://www.staginggm.com",
+  "browser": "webkit",
+  "writes": false,
+  "tiers": {
+    "starter": {
+      "tier": "starter",
+      "steps": {
+        "login": {
+          "status": 200,
+          "landed": "https://fragrant-forest-16c2.cloudflareaccess.com/cdn-cgi/access/login/www.staginggm.com?kid=2004a897a5987068a02616f898e073476bc6827cd7a0b7d937359695ee8d501a&meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjEwZjljZTQwOTFiNzQ1ZGU0OWFhZDUyOGY0YjU5YjIxMDQyNDg2ODY1MjdhOGM0Y2FlMDhhNjViNmZmYTU5OWMifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjIwMDRhODk3YTU5ODcwNjhhMDI2MTZmODk4ZTA3MzQ3NmJjNjgyN2NkN2EwYjdkOTM3MzU5Njk1ZWU4ZDUwMWEiLCJob3N0bmFtZSI6Ind3dy5zdGFnaW5nZ20uY29tIiwicmVkaXJlY3RfdXJsIjoiL2dtLXRlc3QtbG9naW4_YWNjb3VudD1zdGFydGVyIiwic2VydmljZV90b2tlbl9zdGF0dXMiOmZhbHNlLCJpc193YXJwIjpmYWxzZSwiaXNfZ2F0ZXdheSI6ZmFsc2UsImV4cCI6MTc5MDkyMzM1NSwibmJmIjoxNzkwOTIzMDU1LCJpYXQiOjE3OTA5MjMwNTUsImF1dGhfc3RhdHVzIjoiTk9ORSIsIm10bHNfYXV0aCI6eyJjZXJ0X2lzc3Vlcl9kbiI6IiIsImNlcnRfc2VyaWFsIjoiIiwiY2VydF9pc3N1ZXJfc2tpIjoiIiwiY2VydF9wcmVzZW50ZWQiOmZhbHNlLCJjb21tb25fbmFtZSI6IiIsImF1dGhfc3RhdHVzIjoiTk9ORSJ9LCJyZWFsX2NvdW50cnkiOiJVUyIsImFwcF9zZXNzaW9uX2hhc2giOiI4N2ViOGU5NzMyMWRjODE3MTk1MWM5ODk4MmM4OGQzZjQxMjk5MTIzZmNjOTFmYjIyYjU0Y2QxZGJhYTIyMTEzIn0.BSSnmrTBpzRdh5pGGU7cpSEaW3Fb5yFQMbpIVqDz__GK6TnnhLtokci7kW1GLyaapoCqL7e-eJ-iGfny0leaK-pgr36F_8R8l82Jm9z9UX_2NxCPBxwF46cjOlgkTYbqDHP-eXzkBNJ6qNnphQD9oY-grdfnoSKIE0ldvzPlDKOP29pfzXPcpwY2ejw5XCQfXK8bbi94Mm1h87gObzJfGI8-r6vKtBQ9r-MSN6X_aPwDJevphn2WapLpUnFTeqSoSJRkcW-QNcZKjV7BAM5rCMAoECghqmUDI3M9kBLd3VNIL65ECEv7SNC2CLBQZ6p9rz6T6RQXFiGtdLsdeKgx1A&redirect_url=%2Fgm-test-login%3Faccount%3Dstarter"
+        },
+        "hubLoadMs": 20421
+      },
+      "consoleErrors": [],
+      "failedRequests": []
+    },
+    "plus": {
+      "tier": "plus",
+      "steps": {
+        "login": {
+          "status": 200,
+          "landed": "https://fragrant-forest-16c2.cloudflareaccess.com/cdn-cgi/access/login/www.staginggm.com?kid=2004a897a5987068a02616f898e073476bc6827cd7a0b7d937359695ee8d501a&meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjEwZjljZTQwOTFiNzQ1ZGU0OWFhZDUyOGY0YjU5YjIxMDQyNDg2ODY1MjdhOGM0Y2FlMDhhNjViNmZmYTU5OWMifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjIwMDRhODk3YTU5ODcwNjhhMDI2MTZmODk4ZTA3MzQ3NmJjNjgyN2NkN2EwYjdkOTM3MzU5Njk1ZWU4ZDUwMWEiLCJob3N0bmFtZSI6Ind3dy5zdGFnaW5nZ20uY29tIiwicmVkaXJlY3RfdXJsIjoiL2dtLXRlc3QtbG9naW4_YWNjb3VudD1wbHVzIiwic2VydmljZV90b2tlbl9zdGF0dXMiOmZhbHNlLCJpc193YXJwIjpmYWxzZSwiaXNfZ2F0ZXdheSI6ZmFsc2UsImV4cCI6MTc5MDkyMzM4MCwibmJmIjoxNzkwOTIzMDgwLCJpYXQiOjE3OTA5MjMwODAsImF1dGhfc3RhdHVzIjoiTk9ORSIsIm10bHNfYXV0aCI6eyJjZXJ0X2lzc3Vlcl9kbiI6IiIsImNlcnRfc2VyaWFsIjoiIiwiY2VydF9pc3N1ZXJfc2tpIjoiIiwiY2VydF9wcmVzZW50ZWQiOmZhbHNlLCJjb21tb25fbmFtZSI6IiIsImF1dGhfc3RhdHVzIjoiTk9ORSJ9LCJyZWFsX2NvdW50cnkiOiJVUyIsImFwcF9zZXNzaW9uX2hhc2giOiI3ZWM1OTQxYjk4NmVjZWY0MDZmOWQ1NWMwNWE1NGQxZDdkY2U1ZGU2Y2IxZjMwMWQyMDAzZjA2MDU4NTYwZDcwIn0.F9Abt1ti3eSirz5F1aGaDZFIXF9s0UTAqcpZ8gVCb6cGtx436aN2y9Zu4F6FU3ORbprlDYbZXE0GHaj_fZdx_-q9HUg_TmrW1XY_tOFgNMvsRTOvj1LRgqpmsoB6H0edY3MUWg-cSz9RRo_UL5OBkhEcrj5F4gCc-4mxjncvYw_hi0a8HwlWZALxdee1Ld0D39gNrN-H9vyL5zoa7tnM9e82bhGdzEda1JQZSjPbubxFLis9T5A_vt8oYYkaLWlLsqxrlfDP8_0eoPCNIs33EjvhNrCUh5us5MVTrQGLC7obuPRPy9rzdsphmzJklvwzHkKdN7wCkMwVhnNamuFYrA&redirect_url=%2Fgm-test-login%3Faccount%3Dplus"
+        },
+        "hubLoadMs": 20323
+      },
+      "consoleErrors": [],
+      "failedRequests": []
+    },
+    "advanced": {
+      "tier": "advanced",
+      "steps": {
+        "login": {
+          "status": 200,
+          "landed": "https://fragrant-forest-16c2.cloudflareaccess.com/cdn-cgi/access/login/www.staginggm.com?kid=2004a897a5987068a02616f898e073476bc6827cd7a0b7d937359695ee8d501a&meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjEwZjljZTQwOTFiNzQ1ZGU0OWFhZDUyOGY0YjU5YjIxMDQyNDg2ODY1MjdhOGM0Y2FlMDhhNjViNmZmYTU5OWMifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjIwMDRhODk3YTU5ODcwNjhhMDI2MTZmODk4ZTA3MzQ3NmJjNjgyN2NkN2EwYjdkOTM3MzU5Njk1ZWU4ZDUwMWEiLCJob3N0bmFtZSI6Ind3dy5zdGFnaW5nZ20uY29tIiwicmVkaXJlY3RfdXJsIjoiL2dtLXRlc3QtbG9naW4_YWNjb3VudD1hZHZhbmNlZCIsInNlcnZpY2VfdG9rZW5fc3RhdHVzIjpmYWxzZSwiaXNfd2FycCI6ZmFsc2UsImlzX2dhdGV3YXkiOmZhbHNlLCJleHAiOjE3OTA5MjM0MDQsIm5iZiI6MTc5MDkyMzEwNCwiaWF0IjoxNzkwOTIzMTA0LCJhdXRoX3N0YXR1cyI6Ik5PTkUiLCJtdGxzX2F1dGgiOnsiY2VydF9pc3N1ZXJfZG4iOiIiLCJjZXJ0X3NlcmlhbCI6IiIsImNlcnRfaXNzdWVyX3NraSI6IiIsImNlcnRfcHJlc2VudGVkIjpmYWxzZSwiY29tbW9uX25hbWUiOiIiLCJhdXRoX3N0YXR1cyI6Ik5PTkUifSwicmVhbF9jb3VudHJ5IjoiVVMiLCJhcHBfc2Vzc2lvbl9oYXNoIjoiMDMwOWM4MjQ5YjE2ODgwYTRjMzFkMzRiNzNjNGM5MGJjMDY2N2Q3NjliZjdkNmUyZGUxMGVkZDk5NDQwNTE5ZSJ9.BmzmC0BZ7qu1Bd7Yyp421oycmjJp2ENshlW3l7OEGhMW1JvPUPLASWARf4-DkNnfTaMtAd8EMIXsVKY5LyudSdAD76qSdZFWGCqqP79M03sT8chS5XBX_BAquLcjXjBI8324M_k0WCjNtT_k-CFNYh1cngOtzOmEg7bX6_ZW_WavAugZPPjUXc5tAXRRBeGFI2X11GOlXGr6MgK9-yMXoVIfrCQp6vU3nyN6sfvWWZXgWrOGCvv1Jdq8NOZ8v5L_IpWjSnIIxEuMdgwmrO9FrYwO2jMauYYNi7-ObCkMjM9zUDRtN1KKyiNmAMt6M3ZMhmDPIpbHcHhVHjE7FgcFMA&redirect_url=%2Fgm-test-login%3Faccount%3Dadvanced"
+        },
+        "hubLoadMs": 20299
+      },
+      "consoleErrors": [],
+      "failedRequests": []
+    },
+    "pro": {
+      "tier": "pro",
+      "steps": {
+        "login": {
+          "status": 200,
+          "landed": "https://fragrant-forest-16c2.cloudflareaccess.com/cdn-cgi/access/login/www.staginggm.com?kid=2004a897a5987068a02616f898e073476bc6827cd7a0b7d937359695ee8d501a&meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjEwZjljZTQwOTFiNzQ1ZGU0OWFhZDUyOGY0YjU5YjIxMDQyNDg2ODY1MjdhOGM0Y2FlMDhhNjViNmZmYTU5OWMifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjIwMDRhODk3YTU5ODcwNjhhMDI2MTZmODk4ZTA3MzQ3NmJjNjgyN2NkN2EwYjdkOTM3MzU5Njk1ZWU4ZDUwMWEiLCJob3N0bmFtZSI6Ind3dy5zdGFnaW5nZ20uY29tIiwicmVkaXJlY3RfdXJsIjoiL2dtLXRlc3QtbG9naW4_YWNjb3VudD1wcm8iLCJzZXJ2aWNlX3Rva2VuX3N0YXR1cyI6ZmFsc2UsImlzX3dhcnAiOmZhbHNlLCJpc19nYXRld2F5IjpmYWxzZSwiZXhwIjoxNzkwOTIzNDI3LCJuYmYiOjE3OTA5MjMxMjcsImlhdCI6MTc5MDkyMzEyNywiYXV0aF9zdGF0dXMiOiJOT05FIiwibXRsc19hdXRoIjp7ImNlcnRfaXNzdWVyX2RuIjoiIiwiY2VydF9zZXJpYWwiOiIiLCJjZXJ0X2lzc3Vlcl9za2kiOiIiLCJjZXJ0X3ByZXNlbnRlZCI6ZmFsc2UsImNvbW1vbl9uYW1lIjoiIiwiYXV0aF9zdGF0dXMiOiJOT05FIn0sInJlYWxfY291bnRyeSI6IlVTIiwiYXBwX3Nlc3Npb25faGFzaCI6IjY4NDE2NDc5NmU0NjE5OTFiNWQ3NjQ4ZTE2ZTM1NTljNmI5MDcxOTAwYTg0YWIzODIyMTFhMjI1YjI3YzE5NTEifQ.X0XVWJ1ohq5fSKnfyPIcThXG0Ft1Iot1u2a8DRQuYeWoAxOAp9YycJf3ce6_DoXJxvYibHuko1n_isN1EYIu6N-rX9Y7731u3U1VdFQhGQGikmohMm1QHSfp6sG1DBCJYaVhvn92GPv_mEhnDwBvPX6mT1WQEpPuAo8jLssKRkcp0P4s1s0kA3ICuFVHLvfmfcPOe92swL8oxyOtHqR-SBknkB368QNI8eyX_DDZVNHo7A2gXntoG4CMA2Sx6rK4EVhqrluMgqqTdoWmAmJA-u-XrOhxM4cl-FgPyLYyg199suX8nVKTZjokT4ZhFrtB_jBh50qmWtqCtlLoaPwPeQ&redirect_url=%2Fgm-test-login%3Faccount%3Dpro"
+        },
+        "hubLoadMs": 20257
+      },
+      "consoleErrors": [],
+      "failedRequests": []
+    }
+  },
+  "findings": [
+    {
+      "severity": "blocker",
+      "tier": "starter",
+      "area": "webkit/login",
+      "summary": "Hub loaded with no GM_TOKEN: not logged in, or the WP bootstrap failed.",
+      "landed": "https://fragrant-forest-16c2.cloudflareaccess.com/cdn-cgi/access/login/www.staginggm.com?kid=2004a897a5987068a02616f898e073476bc6827cd7a0b7d937359695ee8d501a&meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjEwZjljZTQwOTFiNzQ1ZGU0OWFhZDUyOGY0YjU5YjIxMDQyNDg2ODY1MjdhOGM0Y2FlMDhhNjViNmZmYTU5OWMifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjIwMDRhODk3YTU5ODcwNjhhMDI2MTZmODk4ZTA3MzQ3NmJjNjgyN2NkN2EwYjdkOTM3MzU5Njk1ZWU4ZDUwMWEiLCJob3N0bmFtZSI6Ind3dy5zdGFnaW5nZ20uY29tIiwicmVkaXJlY3RfdXJsIjoiL3VzZXItaHViLXRhaWx3aW5kLyIsInNlcnZpY2VfdG9rZW5fc3RhdHVzIjpmYWxzZSwiaXNfd2FycCI6ZmFsc2UsImlzX2dhdGV3YXkiOmZhbHNlLCJleHAiOjE3OTA5MjMzNTYsIm5iZiI6MTc5MDkyMzA1NiwiaWF0IjoxNzkwOTIzMDU2LCJhdXRoX3N0YXR1cyI6Ik5PTkUiLCJtdGxzX2F1dGgiOnsiY2VydF9pc3N1ZXJfZG4iOiIiLCJjZXJ0X3NlcmlhbCI6IiIsImNlcnRfaXNzdWVyX3NraSI6IiIsImNlcnRfcHJlc2VudGVkIjpmYWxzZSwiY29tbW9uX25hbWUiOiIiLCJhdXRoX3N0YXR1cyI6Ik5PTkUifSwicmVhbF9jb3VudHJ5IjoiVVMiLCJhcHBfc2Vzc2lvbl9oYXNoIjoiODdlYjhlOTczMjFkYzgxNzE5NTFjOTg5ODJjODhkM2Y0MTI5OTEyM2ZjYzkxZmIyMmI1NGNkMWRiYWEyMjExMyJ9.efCdYkAkXqpT2rEI7WPNSm--91Mg500v7tF345nVfLhzvvOYliJECMGDubvzeJlG2xfvoGFmrdlJ9Yv899G2f-wAbnjx3Oi1LgjybTat3rVgNJKTYqahjPjLFnV7wwY2Z6J3ztDzKnbGcuxJjcfFODLDQxXqHcOn_gGKldei_zMMwuaFPKoU-Qmt1vKrXBgddEkAiFOPRhwcCZ42PVFytf7nFBblzBPK9t6xozwEonNYz1sFqHhh7Z_o4i02UDAFiNLk2h28ZAbZHotWPM6FItDFer0Qe6NvGpolzjmqTcij-69Ysye1MKpld0B2z52Wcx2YiWDuWhEOQG-z9XdT7A&redirect_url=%2Fuser-hub-tailwind%2F"
+    },
+    {
+      "severity": "blocker",
+      "tier": "plus",
+      "area": "webkit/login",
+      "summary": "Hub loaded with no GM_TOKEN: not logged in, or the WP bootstrap failed.",
+      "landed": "https://fragrant-forest-16c2.cloudflareaccess.com/cdn-cgi/access/login/www.staginggm.com?kid=2004a897a5987068a02616f898e073476bc6827cd7a0b7d937359695ee8d501a&meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjEwZjljZTQwOTFiNzQ1ZGU0OWFhZDUyOGY0YjU5YjIxMDQyNDg2ODY1MjdhOGM0Y2FlMDhhNjViNmZmYTU5OWMifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjIwMDRhODk3YTU5ODcwNjhhMDI2MTZmODk4ZTA3MzQ3NmJjNjgyN2NkN2EwYjdkOTM3MzU5Njk1ZWU4ZDUwMWEiLCJob3N0bmFtZSI6Ind3dy5zdGFnaW5nZ20uY29tIiwicmVkaXJlY3RfdXJsIjoiL3VzZXItaHViLXRhaWx3aW5kLyIsInNlcnZpY2VfdG9rZW5fc3RhdHVzIjpmYWxzZSwiaXNfd2FycCI6ZmFsc2UsImlzX2dhdGV3YXkiOmZhbHNlLCJleHAiOjE3OTA5MjMzODAsIm5iZiI6MTc5MDkyMzA4MCwiaWF0IjoxNzkwOTIzMDgwLCJhdXRoX3N0YXR1cyI6Ik5PTkUiLCJtdGxzX2F1dGgiOnsiY2VydF9pc3N1ZXJfZG4iOiIiLCJjZXJ0X3NlcmlhbCI6IiIsImNlcnRfaXNzdWVyX3NraSI6IiIsImNlcnRfcHJlc2VudGVkIjpmYWxzZSwiY29tbW9uX25hbWUiOiIiLCJhdXRoX3N0YXR1cyI6Ik5PTkUifSwicmVhbF9jb3VudHJ5IjoiVVMiLCJhcHBfc2Vzc2lvbl9oYXNoIjoiN2VjNTk0MWI5ODZlY2VmNDA2ZjlkNTVjMDVhNTRkMWQ3ZGNlNWRlNmNiMWYzMDFkMjAwM2YwNjA1ODU2MGQ3MCJ9.AH_Qz3Ink5KknUTIGsqFPh3gqFut3e3QaU5M0eBvS9Kdvgi5MyJLKA23knDFkr7C6oRgdyWQs8Kzt_VNEWcGwQM9ce218U8KH9UrVObX-NdF9Nm7pcoOS1PkPNwLG25PUsvCDGmqif-77Ykx3uMscrK4iG0oDqIVK47vXM4iRy-c_9cOse0nxYfBhYCfdxVZLFUwSVeVFyQqJiTraOondcG4D3arlesIKMEJbZ4YsvAtDBFd_L3fXPnDdUFNzA41nkx2gfVd7teVFlWnGwm19GYCq4c1iuB8ioWLvIesqWk8RbuK69EE6nRDQfhCU0MazHCwEoGYBSx8PVR0hYC1BQ&redirect_url=%2Fuser-hub-tailwind%2F"
+    },
+    {
+      "severity": "blocker",
+      "tier": "advanced",
+      "area": "webkit/login",
+      "summary": "Hub loaded with no GM_TOKEN: not logged in, or the WP bootstrap failed.",
+      "landed": "https://fragrant-forest-16c2.cloudflareaccess.com/cdn-cgi/access/login/www.staginggm.com?kid=2004a897a5987068a02616f898e073476bc6827cd7a0b7d937359695ee8d501a&meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjEwZjljZTQwOTFiNzQ1ZGU0OWFhZDUyOGY0YjU5YjIxMDQyNDg2ODY1MjdhOGM0Y2FlMDhhNjViNmZmYTU5OWMifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjIwMDRhODk3YTU5ODcwNjhhMDI2MTZmODk4ZTA3MzQ3NmJjNjgyN2NkN2EwYjdkOTM3MzU5Njk1ZWU4ZDUwMWEiLCJob3N0bmFtZSI6Ind3dy5zdGFnaW5nZ20uY29tIiwicmVkaXJlY3RfdXJsIjoiL3VzZXItaHViLXRhaWx3aW5kLyIsInNlcnZpY2VfdG9rZW5fc3RhdHVzIjpmYWxzZSwiaXNfd2FycCI6ZmFsc2UsImlzX2dhdGV3YXkiOmZhbHNlLCJleHAiOjE3OTA5MjM0MDQsIm5iZiI6MTc5MDkyMzEwNCwiaWF0IjoxNzkwOTIzMTA0LCJhdXRoX3N0YXR1cyI6Ik5PTkUiLCJtdGxzX2F1dGgiOnsiY2VydF9pc3N1ZXJfZG4iOiIiLCJjZXJ0X3NlcmlhbCI6IiIsImNlcnRfaXNzdWVyX3NraSI6IiIsImNlcnRfcHJlc2VudGVkIjpmYWxzZSwiY29tbW9uX25hbWUiOiIiLCJhdXRoX3N0YXR1cyI6Ik5PTkUifSwicmVhbF9jb3VudHJ5IjoiVVMiLCJhcHBfc2Vzc2lvbl9oYXNoIjoiMDMwOWM4MjQ5YjE2ODgwYTRjMzFkMzRiNzNjNGM5MGJjMDY2N2Q3NjliZjdkNmUyZGUxMGVkZDk5NDQwNTE5ZSJ9.nunM5zKkFMFillRTpEHNmPFsjWeR2gKNOHp9_L5GA0IMqfXQgg5iEbIfmoA2C8roHfHXrbHPW0MoLrwRt0106NSGMIa-xHNGfxeCi5IiGVPQA7AfoIT0UAJ8JCKeAZqs5ndUZX6XDkaqh0shWm91VxnvmKIKnQeZmSCesFXSX-D2PZ_jTFZKhnrflAjJyEk9CvN0uMD0TVRJNy588tgeb0VznLZymvKjSYjasEtNt-DfGybBZLNWVkZpVqGdGr9hN0SNKhQsAH3REz30zI0iE35fr6nKBv7wuk3esijYO34EqjTNxhQ20eY5BgmBK0bgzeMdbu7dwNU4bI2HJhbklA&redirect_url=%2Fuser-hub-tailwind%2F"
+    },
+    {
+      "severity": "blocker",
+      "tier": "pro",
+      "area": "webkit/login",
+      "summary": "Hub loaded with no GM_TOKEN: not logged in, or the WP bootstrap failed.",
+      "landed": "https://fragrant-forest-16c2.cloudflareaccess.com/cdn-cgi/access/login/www.staginggm.com?kid=2004a897a5987068a02616f898e073476bc6827cd7a0b7d937359695ee8d501a&meta=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjEwZjljZTQwOTFiNzQ1ZGU0OWFhZDUyOGY0YjU5YjIxMDQyNDg2ODY1MjdhOGM0Y2FlMDhhNjViNmZmYTU5OWMifQ.eyJ0eXBlIjoibWV0YSIsImF1ZCI6IjIwMDRhODk3YTU5ODcwNjhhMDI2MTZmODk4ZTA3MzQ3NmJjNjgyN2NkN2EwYjdkOTM3MzU5Njk1ZWU4ZDUwMWEiLCJob3N0bmFtZSI6Ind3dy5zdGFnaW5nZ20uY29tIiwicmVkaXJlY3RfdXJsIjoiL3VzZXItaHViLXRhaWx3aW5kLyIsInNlcnZpY2VfdG9rZW5fc3RhdHVzIjpmYWxzZSwiaXNfd2FycCI6ZmFsc2UsImlzX2dhdGV3YXkiOmZhbHNlLCJleHAiOjE3OTA5MjM0MjgsIm5iZiI6MTc5MDkyMzEyOCwiaWF0IjoxNzkwOTIzMTI4LCJhdXRoX3N0YXR1cyI6Ik5PTkUiLCJtdGxzX2F1dGgiOnsiY2VydF9pc3N1ZXJfZG4iOiIiLCJjZXJ0X3NlcmlhbCI6IiIsImNlcnRfaXNzdWVyX3NraSI6IiIsImNlcnRfcHJlc2VudGVkIjpmYWxzZSwiY29tbW9uX25hbWUiOiIiLCJhdXRoX3N0YXR1cyI6Ik5PTkUifSwicmVhbF9jb3VudHJ5IjoiVVMiLCJhcHBfc2Vzc2lvbl9oYXNoIjoiNjg0MTY0Nzk2ZTQ2MTk5MWI1ZDc2NDhlMTZlMzU1OWM2YjkwNzE5MDBhODRhYjM4MjIxMWEyMjViMjdjMTk1MSJ9.iDz-ciwFGKVuiIwJDyJXP6L36pXVE9zTx6u8YU_N9ueQUgwE7EoFxMxp7c7KaqNE6TPkWPEKrd2y9lXUS2HpU3VgsjIY-KSFhI1CjuHO7nKmsX2lx3z8VY6j_wSqiVNFkqpYuR6jPMkidzhWj1ScN3NGfz9sFlpHuHqtSzlpdnAqQy1LdP_5PPlCqZSnIzJ8F0sJTNwLuk_JSUgZNqp9N4amjg36-u-8MkRBlvv1FyRVblVLMpVvhe4k4FXKMaeYWvQ3iw6Lvs41uqrEnf6OJtR2BTIZAOouxS3yge-98tbByU_GYW-Pg5o7gY0g38-3iLSx9Op9IVaaKPtqm84TiQ&redirect_url=%2Fuser-hub-tailwind%2F"
+    }
+  ],
+  "notCovered": [],
+  "tiersReachedHub": 0,
+  "durationSec": 100
+}
