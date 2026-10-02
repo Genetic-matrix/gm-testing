@@ -29,7 +29,7 @@ const MAX_PAGES = Number(process.env.GM_LINKCHECK_MAX_PAGES) || Infinity;
 const DELAY_MS = 250;                      // per-worker pause between requests
 const WORKERS = Number(process.env.GM_LINKCHECK_WORKERS) || 4;   // parallel fetchers (39k pages do not fit one-at-a-time)
 let challengedCount = 0, firstChallengeAfter = null;
-const LANGS = ['de', 'es', 'fr', 'it', 'nl', 'pt-pt', 'pt'];
+const LANGS = ['de', 'es', 'fr', 'it', 'nl', 'pt-pt', 'pt', 'hi'];   // hi = Astro Calendar only (John, 2 Oct)
 const LIVE_HOST = /(^|\.)geneticmatrix\.com$/i;
 const NON_LIVE_HOST = /(^|\.)(staginggm\.com|gmtxdev\.com)$/i;
 const NOT_FOUND = /page not found|404 not found|nothing (was )?found|oops! that page can.?t be found|page you requested could not be found/i;
