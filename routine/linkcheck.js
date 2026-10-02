@@ -87,8 +87,41 @@ async function resolve(url, keepBody) {
   return out;
 }
 
+function groupOf(sitemapUrl) {
+  const f = sitemapUrl.split('/').pop();
+  if (/celebrit/i.test(f)) return 'celeb';
+  if (/categor/i.test(f)) return 'category';
+  if (/calendar/i.test(f)) return 'calendar';
+  return 'core';
+}
+// Deterministic shuffle seeded by the date, so a night's sample is reproducible from its date.
+function seeded(seed) { let x = seed >>> 0; return () => { x ^= x << 13; x >>>= 0; x ^= x >> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; }; }
+const SAMPLE_PER_GROUP_LANG = Number(process.env.GM_LINKCHECK_SAMPLE) || 150;
+const SLICE = Number(process.env.GM_LINKCHECK_SLICE) || 40000;
+function coveragePlan(all) {
+  const core = [], heavy = [], byGL = {};
+  for (const p of all) {
+    const g = pageGroup.get(p) || 'core';
+    if (g === 'core' || g === 'calendar') core.push(p);
+    else { heavy.push(p); const k = g + ':' + langOf(p); (byGL[k] = byGL[k] || []).push(p); }
+  }
+  const day = Math.floor(Date.parse(today) / 86400000);
+  const rnd = seeded(day);
+  const sample = [];
+  for (const k of Object.keys(byGL).sort()) {
+    const arr = byGL[k];
+    for (let i = 0; i < Math.min(SAMPLE_PER_GROUP_LANG, arr.length); i++) sample.push(arr[Math.floor(rnd() * arr.length)]);
+  }
+  const slices = Math.max(1, Math.ceil(heavy.length / SLICE));
+  const k = day % slices;
+  const slice = heavy.slice(k * SLICE, (k + 1) * SLICE);
+  const pages = [...new Set([...core, ...sample, ...slice])];
+  return { pages, stats: { core: core.length, sample: new Set(sample).size, slice: `${k + 1} of ${slices} (${slice.length} pages)`, fullCycleNights: slices, planned: pages.length } };
+}
+
 // Find the sitemaps the way search engines do: robots.txt "Sitemap:" lines first, then the usual WordPress
 // addresses. Every fetch is logged, so a run that finds nothing says exactly why.
+const pageGroup = new Map();   // url -> 'celeb' | 'category' | 'calendar' | 'core', from the sitemap it came from
 async function sitemapPages(log) {
   const H = KEY ? { 'X-GM-Crawl-Key': KEY } : {};
   const get = async u => {
@@ -113,10 +146,10 @@ async function sitemapPages(log) {
     let nLoc = 0, nAlt = 0;
     for (const m of body.matchAll(/<loc>\s*(?:<!\[CDATA\[)?\s*([^<\s\]]+)/gi)) {
       const loc = m[1].replace(/&amp;/g, '&');
-      if (/\.xml(\.gz)?(\?|$)/i.test(loc)) queue.push(loc); else { pages.push(loc); nLoc++; }
+      if (/\.xml(\.gz)?(\?|$)/i.test(loc)) queue.push(loc); else { pages.push(loc); nLoc++; if (!pageGroup.has(loc)) pageGroup.set(loc, groupOf(u)); }
     }
     // Other languages are often listed as hreflang alternates inside each <url>, not as their own <loc>.
-    for (const m of body.matchAll(/<xhtml:link[^>]*\shref=["']([^"']+)["']/gi)) { pages.push(m[1].replace(/&amp;/g, '&')); nAlt++; }
+    for (const m of body.matchAll(/<xhtml:link[^>]*\shref=["']([^"']+)["']/gi)) { const a = m[1].replace(/&amp;/g, '&'); pages.push(a); nAlt++; if (!pageGroup.has(a)) pageGroup.set(a, groupOf(u)); }
     if (nLoc || nAlt) log.push(`  ${u.split('/').pop()}: ${nLoc} <loc>, ${nAlt} alternates`);
   }
   return [...new Set(pages)];
@@ -146,7 +179,11 @@ async function sitemapPages(log) {
     results.sitemapUnique = allPages.length;
     const byLang = {}; for (const p of allPages) { const l = langOf(p); byLang[l] = (byLang[l] || 0) + 1; }
     results.sitemapByLang = byLang;
-    const pages = process.env.GM_LINKCHECK_SITEMAP_ONLY === '1' ? [] : allPages.slice(0, MAX_PAGES);
+    const plan = coveragePlan(allPages);
+    results.coverage = plan.stats;
+    const ex = {}; for (const p of allPages) { const g = pageGroup.get(p) || 'core'; (ex[g] = ex[g] || []); if (ex[g].length < 8) ex[g].push(p); }
+    results.examples = ex;
+    const pages = process.env.GM_LINKCHECK_SITEMAP_ONLY === '1' ? [] : plan.pages.slice(0, MAX_PAGES);
     if (!results.blockers.length && !allPages.length) results.blockers.push(`No pages found in the sitemaps. Tried: ${results.sitemapLog.join(' | ')}`);
     const htmlOf = new Map();
     // Fetch a page with a plain GET (the same hop-by-hop resolve as links), keeping its HTML for link parsing.
@@ -205,7 +242,7 @@ async function sitemapPages(log) {
       : results.blockers.length
       ? `LIVE link check ${today}: BLOCKED. ${results.blockers.join(' ')}`
       : `LIVE link check ${today}: ${results.pages} pages, ${results.links} internal links. ${broken.length} broken, ${wrong.length} wrong-language, ${results.pageProblems.length} page problems, ${warns} warnings. Control URL detected as broken: yes.`;
-    const md = [`# ${head}`, '', `Run ${results.runId}, started ${results.startedAt}, ${results.durationMin} min. Sitemaps list ${results.sitemapUnique ?? '?'} unique pages: ${Object.entries(results.sitemapByLang || {}).map(([k, v]) => `${k} ${v}`).join(', ')}.`, '',
+    const md = [`# ${head}`, '', `Run ${results.runId}, started ${results.startedAt}, ${results.durationMin} min. Tonight: ${results.coverage ? `${results.coverage.core} core pages in full, ${results.coverage.sample} sampled celebrity/category pages, rotating slice ${results.coverage.slice}; every page covered every ${results.coverage.fullCycleNights} nights.` : ''} Sitemaps list ${results.sitemapUnique ?? '?'} unique pages: ${Object.entries(results.sitemapByLang || {}).map(([k, v]) => `${k} ${v}`).join(', ')}.`, '',
       '## Broken links', '', ...(broken.length ? broken.map(b => `- ${b.link} -> ${b.finalUrl || ''} (${b.why}) on ${b.pages.length} page(s), e.g. ${b.pages[0]}`) : ['None.']), '',
       '## Wrong language', '', ...(wrong.length ? wrong.map(w => `- ${w.link} on a ${w.pageLang} page ends on ${w.finalUrl} (${w.finalLang}), ${w.pages.length} page(s), e.g. ${w.pages[0]}`) : ['None.']), '',
       '## Pages that do not load', '', ...(results.pageProblems.length ? results.pageProblems.map(x => `- ${x.page}: ${x.why} (${x.finalUrl})`) : ['None.']), '',
