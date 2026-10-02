@@ -142,6 +142,7 @@ function seoCheck(page, finalUrl, html, robotsHeader) {
   else {
     let cu; try { cu = new URL(canon, finalUrl).toString(); } catch { cu = canon; }
     if (langOf(cu) !== pageLang) err('canonical-language', `canonical points to another language: ${cu}`);
+    else if (/\/celebrity\/(-[^/]*|[^/]*-|[^/]*--[^/]*)\//.test(new URL(cu).pathname)) err('canonical-unclean-slug', `canonical uses an unclean celebrity slug (stray or double hyphen, F-018): ${cu}`);
     else if (norm(cu).replace(/\/$/, '') !== norm(finalUrl).replace(/\/$/, '')) err('canonical-elsewhere', `canonical points to a different page: ${cu}`);
   }
   // hreflang alternates: each must point to a page in that language, and the page should list itself.
