@@ -78,8 +78,9 @@ async function resolve(url, keepBody) {
     robotsHeader = res.headers()['x-robots-tag'] || '';
     break;
   }
-  const title = (body.match(/<title[^>]*>([^<]*)</i) || [])[1] || '';
-  const h1 = (body.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) || [])[1] || '';
+  const bodyNc = body.replace(/<!--[\s\S]*?-->/g, '');
+  const title = (bodyNc.match(/<title[^>]*>([^<]*)</i) || [])[1] || '';
+  const h1 = (bodyNc.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) || [])[1] || '';
   const challenged = (status === 403 || status === 503) && (/cf-chl|challenge-platform|Just a moment/i.test(body) || /__cf_chl/.test(cur));
   if (challenged) { challengedCount++; if (firstChallengeAfter === null) firstChallengeAfter = cache.size; }
   const out = { hops, finalUrl: cur, status, error, challenged, notFound: NOT_FOUND.test(title + ' ' + h1.replace(/<[^>]+>/g, ' ')) };
@@ -128,6 +129,8 @@ const seo = { errors: [], warnings: [], titles: new Map(), checked: 0 };
 const attr = (tag, name) => { const m = tag.match(new RegExp(name + '\\s*=\\s*["\']([^"\']*)["\']', 'i')); return m ? m[1] : null; };
 function seoCheck(page, finalUrl, html, robotsHeader) {
   seo.checked++;
+  // Strip HTML comments first: a commented-out <title> in header-tailwind.php fooled the first version (F-019, withdrawn 2 Oct).
+  html = html.replace(/<!--[\s\S]*?-->/g, '');
   const head = (html.match(/<head[\s\S]*?<\/head>/i) || [html.slice(0, 60000)])[0];
   const pageLang = langOf(finalUrl);
   const err = (type, detail) => seo.errors.push({ type, page, detail });
@@ -227,6 +230,7 @@ async function sitemapPages(log) {
       results.probe = [];
       for (const u of probe) {
         const t = await resolve(norm(u.startsWith('http') ? u : BASE + u), true);
+        if (t.body) t.body = t.body.replace(/<!--[\s\S]*?-->/g, '');
         const canon = ((t.body || '').match(/<link[^>]+rel=["']canonical["'][^>]*>/i) || [''])[0].match(/href=["']([^"']+)["']/i);
         const title = (((t.body || '').match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '').trim();
         results.probe.push({ url: u, status: t.status, hops: t.hops.map(h => `${h.status} -> ${h.to}`), finalUrl: t.finalUrl, notFound: t.notFound, challenged: t.challenged, canonical: canon ? canon[1] : null, title: title.slice(0, 90) });
