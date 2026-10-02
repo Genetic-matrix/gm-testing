@@ -1,0 +1,229 @@
+{
+  "date": "2026-10-02",
+  "startedAt": "2026-10-02T08:50:06.201Z",
+  "runId": "36986252673",
+  "tiers": {
+    "starter": {
+      "tier": "starter"
+    },
+    "plus": {
+      "tier": "plus"
+    },
+    "advanced": {
+      "tier": "advanced"
+    },
+    "pro": {
+      "tier": "pro"
+    }
+  },
+  "findings": [
+    {
+      "severity": "blocker",
+      "tier": "starter",
+      "area": "login",
+      "summary": "Logged in but the hub has no token: login failed or the hub bootstrap failed on live.",
+      "url": "https://www.geneticmatrix.com/"
+    },
+    {
+      "severity": "blocker",
+      "tier": "plus",
+      "area": "login",
+      "summary": "Logged in but the hub has no token: login failed or the hub bootstrap failed on live.",
+      "url": "https://www.geneticmatrix.com/"
+    },
+    {
+      "severity": "blocker",
+      "tier": "advanced",
+      "area": "login",
+      "summary": "Logged in but the hub has no token: login failed or the hub bootstrap failed on live.",
+      "url": "https://www.geneticmatrix.com/"
+    },
+    {
+      "severity": "blocker",
+      "tier": "pro",
+      "area": "login",
+      "summary": "Logged in but the hub has no token: login failed or the hub bootstrap failed on live.",
+      "url": "https://www.geneticmatrix.com/"
+    },
+    {
+      "severity": "critical",
+      "tier": "-",
+      "area": "read-only guard",
+      "summary": "The live hub tried 20 write request(s) during a read-only session; all were blocked.",
+      "sample": [
+        {
+          "tier": "starter",
+          "method": "POST",
+          "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
+          "action": ""
+        },
+        {
+          "tier": "starter",
+          "method": "POST",
+          "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442752739add6c5",
+          "action": ""
+        },
+        {
+          "tier": "starter",
+          "method": "POST",
+          "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
+          "action": "SignUser"
+        },
+        {
+          "tier": "starter",
+          "method": "POST",
+          "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442754fdf29d6c5",
+          "action": ""
+        },
+        {
+          "tier": "starter",
+          "method": "POST",
+          "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
+          "action": ""
+        },
+        {
+          "tier": "plus",
+          "method": "POST",
+          "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
+          "action": ""
+        },
+        {
+          "tier": "plus",
+          "method": "POST",
+          "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442762c9f1705c7",
+          "action": ""
+        },
+        {
+          "tier": "plus",
+          "method": "POST",
+          "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
+          "action": "SignUser"
+        }
+      ]
+    }
+  ],
+  "blockedWrites": [
+    {
+      "tier": "starter",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
+      "action": ""
+    },
+    {
+      "tier": "starter",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442752739add6c5",
+      "action": ""
+    },
+    {
+      "tier": "starter",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
+      "action": "SignUser"
+    },
+    {
+      "tier": "starter",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442754fdf29d6c5",
+      "action": ""
+    },
+    {
+      "tier": "starter",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
+      "action": ""
+    },
+    {
+      "tier": "plus",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
+      "action": ""
+    },
+    {
+      "tier": "plus",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442762c9f1705c7",
+      "action": ""
+    },
+    {
+      "tier": "plus",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
+      "action": "SignUser"
+    },
+    {
+      "tier": "plus",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a4427653da8e05c7",
+      "action": ""
+    },
+    {
+      "tier": "plus",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
+      "action": ""
+    },
+    {
+      "tier": "advanced",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
+      "action": ""
+    },
+    {
+      "tier": "advanced",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a4427730febbd6bb",
+      "action": ""
+    },
+    {
+      "tier": "advanced",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
+      "action": "SignUser"
+    },
+    {
+      "tier": "advanced",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a44277593943d6bb",
+      "action": ""
+    },
+    {
+      "tier": "advanced",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
+      "action": ""
+    },
+    {
+      "tier": "pro",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
+      "action": ""
+    },
+    {
+      "tier": "pro",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a44278359a4d05c7",
+      "action": ""
+    },
+    {
+      "tier": "pro",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/wp-admin/admin-ajax.php",
+      "action": "SignUser"
+    },
+    {
+      "tier": "pro",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/d76008a69eab/0.3779807485399762:1790928314:cssgY1hZEQpD7LgkJynIOIWx3CIK6ovGpiDtsRfWO7Y/a442785c5de205c7",
+      "action": ""
+    },
+    {
+      "tier": "pro",
+      "method": "POST",
+      "url": "https://www.geneticmatrix.com/cdn-cgi/rum",
+      "action": ""
+    }
+  ],
+  "notCovered": [],
+  "durationMin": 3
+}
