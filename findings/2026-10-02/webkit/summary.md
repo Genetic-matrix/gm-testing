@@ -1,6 +1,6 @@
 # Nightly raw results 2026-10-02 (WebKit early warning, not a Safari-on-Mac pass)
 
-Base https://www.staginggm.com, browser webkit, writes off, 100s.
+Base https://www.staginggm.com, browser webkit, writes off, 101s.
 
 - **starter**: tier claim ?, people ?, create n/a
 - **plus**: tier claim ?, people ?, create n/a

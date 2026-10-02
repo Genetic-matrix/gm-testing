@@ -1,7 +1,7 @@
 {
   "date": "2026-10-02",
-  "startedAt": "2026-10-02T06:37:29.704Z",
-  "runId": "36974368391",
+  "startedAt": "2026-10-02T08:50:25.470Z",
+  "runId": "36986248318",
   "base": "https://www.staginggm.com",
   "browser": "chromium",
   "writes": true,
@@ -11,7 +11,7 @@
       "steps": {
         "login": {
           "status": 403,
-          "landed": "https://www.staginggm.com/gm-test-login?account=starter&__cf_chl_rt_tk=fMDt5lnmsVgivUnp7pLBzRwhFH_dg.Uo5NJMQ.lLDB8-1790923050-1.0.1.1-wqqYPbT8UpXKieV17SawJojtQIHdL7HkarqfWeyxG.U"
+          "landed": "https://www.staginggm.com/gm-test-login?account=starter&__cf_chl_rt_tk=pR1s8soAOrQk6T182TTX5.d7VqsxVzXNqiv_rEC.XtQ-1790931025-1.0.1.1-JOaziHMTibdPwCh4ukrQrQlVQKIIQsVxC5sfoc2N74s"
         }
       },
       "consoleErrors": [
@@ -29,7 +29,7 @@
       "steps": {
         "login": {
           "status": 403,
-          "landed": "https://www.staginggm.com/gm-test-login?account=plus&__cf_chl_rt_tk=fEDwmfKowrRbf.qakjsmYUuUPn2VoIxCkgqw3ioUweE-1790923050-1.0.1.1-3PCTnVzUlPaAOVy39Jok6aTfhNdxmdHOUQcAcoZMLp4"
+          "landed": "https://www.staginggm.com/gm-test-login?account=plus&__cf_chl_rt_tk=Vpz6HfTgy14MJL1.L6smDV8WkvFq.C4LLEDlYslnzFI-1790931026-1.0.1.1-baxCLTVgPdNYCG5WFH6e7McDcHh1cLFNeDBcKfDxX7U"
         }
       },
       "consoleErrors": [
@@ -47,7 +47,7 @@
       "steps": {
         "login": {
           "status": 403,
-          "landed": "https://www.staginggm.com/gm-test-login?account=advanced&__cf_chl_rt_tk=hX65W8V7XZk0twQbXVvOhTF.UXR2wRghr7G7s8Pc14U-1790923050-1.0.1.1-RMvYfrSmb9YvXE371EMufSMhVAlPVs8JkuP0h6VHGX8"
+          "landed": "https://www.staginggm.com/gm-test-login?account=advanced&__cf_chl_rt_tk=5_N1SmwG3afwtEbMv0bpjPtkOkBx1lu1WS6EURp9Njc-1790931026-1.0.1.1-s_gaUrQXMjBSE46NQ4BmYFMoRMBGFVIVSKbyy1B3hbQ"
         }
       },
       "consoleErrors": [
@@ -65,7 +65,7 @@
       "steps": {
         "login": {
           "status": 403,
-          "landed": "https://www.staginggm.com/gm-test-login?account=pro&__cf_chl_rt_tk=kAVFlkGMOTyRD9YyI1Sx5GGPp0nR4BL1Nv9LL.3yfm0-1790923050-1.0.1.1-eRSPvwFI6R9yDSd3qIxa4UIEheFQJeTOZ0aW7mWU0vk"
+          "landed": "https://www.staginggm.com/gm-test-login?account=pro&__cf_chl_rt_tk=CJWWvNEMWNoEO2H53Daq2_Cpu2bKEN8n1AKnvGI.0vw-1790931026-1.0.1.1-8M3HLgXH4bRYiXu0xGnIfFW_1khkvyrRPTjYFT.zD6M"
         }
       },
       "consoleErrors": [
