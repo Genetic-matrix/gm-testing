@@ -1,7 +1,7 @@
 {
   "date": "2026-10-02",
-  "startedAt": "2026-10-02T12:18:25.415Z",
-  "runId": "37005845658",
+  "startedAt": "2026-10-02T12:34:39.501Z",
+  "runId": "37007451963",
   "base": "https://www.geneticmatrix.com",
   "pages": 0,
   "links": 0,
@@ -323,5 +323,65 @@
       "https://www.geneticmatrix.com/de/celebrity/angelino-/"
     ]
   },
-  "durationMin": 2
+  "trailingHyphenSlugs": {
+    "celebrities": 1268,
+    "pages": 62132,
+    "clashWithExisting": 4,
+    "clashExamples": [
+      "charles-marie-widor-",
+      "joseph-gordon-levitt-",
+      "lena-meyer-landrut-",
+      "marceline-desbordes-valmore-"
+    ],
+    "examples": [
+      "ali-a-",
+      "angelino-",
+      "adolf-friedrich-v-grand--duke-of-mecklenburg-",
+      "akihito--emperor-of-japan-",
+      "anouar-ben-abdallah-",
+      "alexander-alekhine-",
+      "-alizee-",
+      "alois-alzheimer-",
+      "asia-argento-",
+      "arthur-ashe-",
+      "-astbury-conjoined-twins-",
+      "anna-magdalena-bach-",
+      "amitabh-bachchan-",
+      "adolf-von-baeyer-",
+      "aubrey-beardsley-",
+      "amel-bent-",
+      "alain-bernard-",
+      "annie-besant-",
+      "alfred--binet-",
+      "angel-bismark-curiel-",
+      "adeline-blondieau-",
+      "adrien-brody-",
+      "aras-bulut-iynemli-",
+      "alison-carroll-",
+      "alfredo-casella-",
+      "andrea-casiraghi-",
+      "agatha-christie-",
+      "anderson-cooper-",
+      "adelaide-crapsey-",
+      "a-j--cronin-",
+      "adelle-davis-",
+      "albert-delegue-",
+      "alain-delon-",
+      "angie-dickinson-",
+      "arielle-dombasle-",
+      "andrea-dovisioso-",
+      "andre-hubert-dumont-",
+      "arthur--eddington-",
+      "albert-edelfelt-",
+      "ali--ferzat-"
+    ]
+  },
+  "durationMin": 2,
+  "seo": {
+    "checked": 0,
+    "errors": [],
+    "warnings": [],
+    "errorCount": 0,
+    "warningCount": 0
+  }
 }

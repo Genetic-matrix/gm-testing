@@ -1,6 +1,6 @@
 # LIVE sitemap COUNT ONLY 2026-10-02 (no pages checked): sitemaps list 5221417 unique pages.
 
-Run 37005845658, started 2026-10-02T12:18:25.415Z, 2 min. Tonight: 840 core pages in full, 2100 sampled celebrity/category pages, rotating slice 31 of 131 (40000 pages); every page covered every 131 nights. Sitemaps list 5221417 unique pages: en 746251, de 745861, es 745861, fr 745861, it 745861, nl 745861, pt-pt 745796, pt 65.
+Run 37007451963, started 2026-10-02T12:34:39.501Z, 2 min. Tonight: 840 core pages in full, 2100 sampled celebrity/category pages, rotating slice 31 of 131 (40000 pages); every page covered every 131 nights. Celebrity slugs ending in a hyphen: 1268 celebrities, 62132 pages, 4 would clash with an existing slug if trimmed. Sitemaps list 5221417 unique pages: en 746251, de 745861, es 745861, fr 745861, it 745861, nl 745861, pt-pt 745796, pt 65.
 
 ## Broken links
 
@@ -17,6 +17,11 @@ None.
 ## Warnings (for a human to judge)
 
 None.
+
+## SEO
+
+0 pages checked. Errors: none. Warnings: none.
+
 
 ## Sitemaps read
 
