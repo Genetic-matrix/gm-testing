@@ -137,7 +137,10 @@ async function runTier(browser, tier) {
   page.on('response', rs => {
     const type = rs.request().resourceType();
     const ct = (rs.headers()['content-type'] || '').toLowerCase();
-    if (['script', 'xhr', 'fetch'].includes(type) && ct.includes('text/html')) htmlInsteadOfCode.push(`${type} ${redact(rs.url().split('?')[0])} -> HTTP ${rs.status()} text/html`);
+    if (!['script', 'xhr', 'fetch'].includes(type) || !ct.includes('text/html')) return;
+    // Name the admin-ajax action, so a by-design HTML reply can be told apart from a broken one.
+    const act = ((rs.request().postData() || '') + '&' + (rs.url().split('?')[1] || '')).match(/(?:^|&)action=([\w-]+)/);
+    htmlInsteadOfCode.push(`${type} ${redact(rs.url().split('?')[0])}${act ? ` (action=${act[1]})` : ''} -> HTTP ${rs.status()} text/html`);
   });
   let tokenTestFrom = Infinity;   // console 401s after this point are the token test's own doing
   const shot = async n => { try { await page.screenshot({ path: path.join(OUT, `${tier}-${n}.png`) }); } catch {} };   // RT5: failures only
